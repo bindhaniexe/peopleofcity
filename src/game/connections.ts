@@ -93,11 +93,14 @@ export function messageToast(c: Conn, body: string): Toast {
   return { msg: `💬 ${c.other.name.split(' ')[0].toUpperCase()}: ${line}`, tone: 'info' }
 }
 
-/** The three lists on the Connections screen. */
+/** When a chat last moved: its last message, else the match. */
+export const lastActive = (c: Conn) => c.last?.at ?? c.last_message_at ?? c.decided_at ?? c.created_at
+
+/** The three lists on the Connections screen; chats newest first, like any messenger. */
 export function groups(items: Conn[]): Record<Tab, Conn[]> {
   return {
     requests: items.filter((c) => c.state === 'pending' && c.dir === 'in'),
-    matches: items.filter((c) => c.state === 'matched'),
+    matches: items.filter((c) => c.state === 'matched').sort((a, b) => Date.parse(lastActive(b)) - Date.parse(lastActive(a))),
     sent: items.filter((c) => c.state === 'pending' && c.dir === 'out'),
   }
 }

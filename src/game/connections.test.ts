@@ -89,6 +89,13 @@ describe('grouping and landing', () => {
     expect([g.requests, g.matches, g.sent].map((l) => l.map((c) => c.id))).toEqual([['ask'], ['chat'], ['sent']])
   })
 
+  it('lists chats newest first, by last message, else the match', () => {
+    const old = conn('old', { last: { body: 'hi', mine: true, at: '2026-10-03T09:00:00Z' } })
+    const now = conn('now', { last: { body: 'yo', mine: false, at: '2026-10-05T09:00:00Z' } })
+    const fresh = conn('fresh', { decided_at: '2026-10-04T09:00:00Z' })
+    expect(groups([old, now, fresh]).matches.map((c) => c.id)).toEqual(['now', 'fresh', 'old'])
+  })
+
   it('lands on the chats that need you, then requests, then any chats', () => {
     expect(landingTab([ask, conn('c', { unread: 1 })])).toBe('matches')
     expect(landingTab([ask, chat])).toBe('requests')
