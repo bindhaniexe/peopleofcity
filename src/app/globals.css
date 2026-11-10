@@ -5605,9 +5605,37 @@ html.touch .ch-list {
   gap: 8px;
 }
 
+/* each reason is its own chunky slab, lifted off the panel (design.md §10.1: hard bottom shadow, no blur) */
 .cf .cn-intent {
   padding: 12px 18px;
   font-size: 20px;
+  background: var(--ink-soft);
+  color: rgba(255, 246, 229, 0.85);
+  box-shadow:
+    inset 4px 0 0 transparent,
+    0 4px 0 rgba(12, 14, 22, 0.55);
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s,
+    color 0.15s;
+}
+
+.cf .cn-intent:hover,
+.cf .cn-intent:focus-visible {
+  color: var(--cream);
+  box-shadow:
+    inset 4px 0 0 var(--saffron),
+    0 6px 0 rgba(12, 14, 22, 0.55);
+}
+
+/* the picked one: cream slab on a saffron edge, raised */
+.cf .cn-intent.chip--on,
+.cf .cn-intent.chip--on:hover {
+  background: var(--cream);
+  color: var(--ink);
+  box-shadow:
+    0 4px 0 var(--saffron),
+    0 7px 0 rgba(12, 14, 22, 0.5);
 }
 
 .cf .cn-intent .unslant {
