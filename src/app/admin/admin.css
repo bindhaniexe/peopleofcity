@@ -208,6 +208,152 @@
 }
 
 /* cards */
+/* FIND: the same field as the founder codes (ink, cream text, a bottom rule that turns saffron) */
+.adm-find {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 1180px;
+  margin: 0 auto;
+  height: 46px;
+  padding: 0 8px 0 14px;
+  background: var(--ink-soft);
+  border-bottom: 3px solid rgba(255, 246, 229, 0.18);
+  box-shadow: var(--hard);
+  transition: border-color 0.15s;
+}
+
+.adm-find:focus-within,
+.adm-find--on {
+  border-bottom-color: var(--saffron);
+}
+
+.adm-find-k {
+  flex: none;
+  display: inline-flex;
+  color: var(--saffron);
+  font-size: 0; /* just the magnifier */
+}
+
+.adm-find-k .unslant {
+  display: inline-flex;
+}
+
+.adm-find input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--cream);
+  caret-color: var(--saffron);
+  font-family: var(--font-body), sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  user-select: text;
+}
+
+.adm-find input::placeholder {
+  color: rgba(255, 246, 229, 0.35);
+}
+
+.adm-find-n {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-family: var(--font-display), sans-serif;
+  font-style: italic;
+  color: var(--saffron);
+}
+
+.adm-find-n b {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.adm-find-n small {
+  font-size: 14px;
+  font-weight: 800;
+  color: rgba(255, 246, 229, 0.45);
+}
+
+.adm-find-clear {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  border: 0;
+  cursor: var(--cur-link);
+  padding: 0 8px 0 10px;
+  background: var(--ink);
+  color: rgba(255, 246, 229, 0.8);
+  font-family: var(--font-display), sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.adm-find-clear:hover {
+  color: var(--cream);
+  background: var(--action);
+}
+
+.adm-find-clear .keycap {
+  min-width: 28px;
+  height: 18px;
+  font-size: 10px;
+  box-shadow: 0 2px 0 #b9ab92;
+}
+
+.adm-find-key {
+  flex: none;
+  min-width: 24px;
+  height: 22px;
+  padding: 0 6px;
+  font-size: 13px;
+  box-shadow: 0 2px 0 #b9ab92;
+  opacity: 0.8;
+}
+
+.adm-find-sub {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  max-width: 1180px;
+  margin: 10px auto 18px;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 246, 229, 0.5);
+}
+
+.adm-find-sub em {
+  font-style: normal;
+  color: var(--saffron);
+}
+
+.adm-find-chip {
+  background: var(--saffron);
+  color: var(--ink);
+  font-family: var(--font-display), sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  font-style: italic;
+  letter-spacing: 0.1em;
+  padding: 3px 12px;
+}
+
+@media (max-width: 640px) {
+  .adm-find-clear .keycap,
+  .adm-find-key {
+    display: none;
+  }
+}
+
 .adm-list {
   display: flex;
   flex-direction: column;

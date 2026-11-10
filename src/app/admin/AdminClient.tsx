@@ -1,7 +1,7 @@
 'use client'
 
 import { CodeEntry } from '@/game/hud/CodeEntry'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import './admin.css'
 import { InvitesAdmin } from './InvitesAdmin'
@@ -96,6 +96,25 @@ const safeUrl = (u?: string | null) => {
   }
 }
 
+const LISTED = /^([^\s@,;]+@[^\s@,;]+\.[^\s@,;]+|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i
+
+/** Emails and application IDs pasted from the CSV (any separator). Two or more = a list, not a search. */
+function pasted(q: string) {
+  const tokens = q.trim().toLowerCase().split(/[\s,;"']+/).filter(Boolean)
+  const listed = tokens.filter((t) => LISTED.test(t))
+  return { tokens, listed: listed.length >= 2 || (listed.length === 1 && tokens.length === 1) ? [...new Set(listed)] : null }
+}
+
+/** The search box: a pasted list shows exactly those people; anything else searches name, email, role, company, WhatsApp, ID. */
+function matches(a: App, q: string) {
+  const { tokens, listed } = pasted(q)
+  if (!tokens.length) return true
+  if (listed) return listed.includes(a.email.toLowerCase()) || listed.includes(a.id)
+  const p = a.profile
+  const hay = [p.name, a.email, p.role, p.company, p.location, a.whatsapp, a.id].filter(Boolean).join(' ').toLowerCase()
+  return tokens.every((t) => hay.includes(t))
+}
+
 async function token() {
   const { data } = await supabase!.auth.getSession()
   return data.session?.access_token ?? null
@@ -112,6 +131,7 @@ export default function AdminClient() {
   const [reports, setReports] = useState<Report[]>([])
   const [tab, setTab] = useState<Tab>('queue')
   const [err, setErr] = useState<string | null>(null)
+  const [q, setQ] = useState('')
 
   const load = useCallback(async () => {
     if (!supabase) return
@@ -153,9 +173,25 @@ export default function AdminClient() {
   const shown = useMemo(() => {
     const t = TABS.find((x) => x.id === tab)
     if (!t) return []
-    const list = apps.filter((a) => (t.statuses as readonly string[]).includes(a.status))
+    const list = apps.filter((a) => (t.statuses as readonly string[]).includes(a.status) && matches(a, q))
     return tab === 'decided' ? list.reverse() : list
-  }, [apps, tab])
+  }, [apps, tab, q])
+  const inTab = TABS.some((t) => t.id === tab) ? counts[tab] : 0
+  const list = pasted(q).listed
+  // pasted entries nobody in this tab has: already decided, a typo, or a different email
+  const missing = list ? list.filter((x) => !shown.some((a) => a.email.toLowerCase() === x || a.id === x)) : []
+  const findRef = useRef<HTMLInputElement>(null)
+  // / jumps to the search, like the game's finder
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement
+      if (e.key !== '/' || el.closest('input, textarea, [contenteditable]')) return
+      e.preventDefault()
+      findRef.current?.focus()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   const sendLink = async () => {
     if (!supabase || sending) return
@@ -273,8 +309,75 @@ export default function AdminClient() {
             </div>
           ) : (
             <>
+              <div className={`adm-find${q.trim() ? ' adm-find--on' : ''}`}>
+                <span className="adm-find-k slant">
+                  <span className="unslant">
+                    <svg viewBox="0 0 20 20" width="17" height="17" aria-hidden>
+                      <circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" strokeWidth="3" />
+                      <path d="M12.6 12.6 17.5 17.5" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" />
+                    </svg>
+                    FIND
+                  </span>
+                </span>
+                <input
+                  ref={findRef}
+                  type="text"
+                  value={q}
+                  spellCheck={false}
+                  aria-label="Search applications"
+                  placeholder="Name, email, role, company, WhatsApp…"
+                  onChange={(e) => setQ(e.target.value)}
+                  // a pasted CSV column: keep one entry per line apart (a one-line box would glue them together)
+                  onPaste={(e) => {
+                    const text = e.clipboardData.getData('text')
+                    if (!/[\r\n]/.test(text)) return
+                    e.preventDefault()
+                    setQ(text.split(/[\r\n]+/).map((l) => l.trim()).filter(Boolean).join(', '))
+                  }}
+                  onKeyDown={(e) => e.key === 'Escape' && (setQ(''), e.currentTarget.blur())}
+                />
+                {q.trim() ? (
+                  <>
+                    <span className="adm-find-n">
+                      <b>{shown.length}</b>
+                      <small>/ {inTab}</small>
+                    </span>
+                    <button className="adm-find-clear" onClick={() => (setQ(''), findRef.current?.focus())}>
+                      CLEAR <span className="keycap">ESC</span>
+                    </button>
+                  </>
+                ) : (
+                  <span className="keycap adm-find-key">/</span>
+                )}
+              </div>
+              <div className="adm-find-sub">
+                {list ? (
+                  <>
+                    <span className="adm-find-chip slant">
+                      <span className="unslant">LIST · {list.length} PASTED</span>
+                    </span>
+                    <span>
+                      {list.length - missing.length} here
+                      {missing.length > 0 && (
+                        <>
+                          {' · '}
+                          <em>
+                            {missing.length} not in this tab: {missing.slice(0, 6).join(', ')}
+                            {missing.length > 6 ? ` +${missing.length - 6} more` : ''}
+                          </em>
+                        </>
+                      )}
+                    </span>
+                  </>
+                ) : (
+                  <span>Tip: paste the email or ID column from the CSV to see just those people.</span>
+                )}
+              </div>
+
               {shown.length === 0 && (
-                <p className="adm-empty">{tab === 'queue' ? 'NOBODY WAITING · THE QUEUE IS CLEAR' : 'NOTHING HERE'}</p>
+                <p className="adm-empty">
+                  {q.trim() ? 'NOBODY MATCHES' : tab === 'queue' ? 'NOBODY WAITING · THE QUEUE IS CLEAR' : 'NOTHING HERE'}
+                </p>
               )}
 
               <div className="adm-list">
