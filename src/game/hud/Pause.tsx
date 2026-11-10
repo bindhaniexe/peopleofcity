@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useDirectory } from '../people/directory'
 import { signOut, useOnboarding } from '../onboarding'
+import { openYou } from './YouPanel'
 import { requestLook } from '../player/input'
 import { useGame } from '../store'
 import { useAudio } from '../audio/engine'
@@ -60,15 +61,15 @@ export function Pause() {
     // that just closed — they must not open Pause.
     let overlayClosedAt = -1e9
     const unsub = useGame.subscribe((s, p) => {
-      const was = p.portalOpen || p.searchOpen || p.statusOpen || p.connectOpen || p.invitesOpen || !!p.openId
-      const now = s.portalOpen || s.searchOpen || s.statusOpen || s.connectOpen || s.invitesOpen || !!s.openId
+      const was = p.portalOpen || p.searchOpen || p.statusOpen || p.connectOpen || p.invitesOpen || p.profileOpen || !!p.openId
+      const now = s.portalOpen || s.searchOpen || s.statusOpen || s.connectOpen || s.invitesOpen || s.profileOpen || !!s.openId
       if (was && !now) overlayClosedAt = performance.now()
     })
     const plain = () => {
       const g = useGame.getState()
       const cinematic = g.trackStage === 'fly' || g.trackStage === 'hold'
       return (
-        g.phase === 'play' && !g.openId && !g.searchOpen && !g.statusOpen && !g.connectOpen && !g.invitesOpen && !g.paused && !cinematic && !g.portalOpen && !g.travel && performance.now() - overlayClosedAt > 700
+        g.phase === 'play' && !g.openId && !g.searchOpen && !g.statusOpen && !g.connectOpen && !g.invitesOpen && !g.profileOpen && !g.paused && !cinematic && !g.portalOpen && !g.travel && performance.now() - overlayClosedAt > 700
       )
     }
 
@@ -123,11 +124,8 @@ export function Pause() {
 
   const profile = () => {
     setPaused(false)
-    const ob = useOnboarding.getState()
-    if (me) {
-      ob.fromProfile()
-      ob.setStep(1)
-    } else ob.setStep(0)
+    if (me) return openYou('profile')
+    useOnboarding.getState().setStep(0)
     startCreate()
   }
 
@@ -175,7 +173,7 @@ export function Pause() {
           </button>
 
           <button className="pause-row" onClick={profile}>
-            <span className="pause-label">{me ? 'EDIT PROFILE' : 'BECOME VISIBLE'}</span>
+            <span className="pause-label">{me ? 'YOUR PROFILE' : 'BECOME VISIBLE'}</span>
             <span className="keycap">V</span>
           </button>
 

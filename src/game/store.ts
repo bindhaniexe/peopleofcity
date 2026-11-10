@@ -27,6 +27,8 @@ type GameState = {
   connectOpen: boolean
   /** Your invites screen (Phase 5D). */
   invitesOpen: boolean
+  /** the YOU panel's PROFILE tab (STATUS = statusOpen, INVITES = invitesOpen; one at a time) */
+  profileOpen: boolean
   /** Pause menu (Esc while exploring). */
   paused: boolean
   pausedAt: number
@@ -65,6 +67,7 @@ type GameState = {
   setStatusOpen: (open: boolean) => void
   setConnectOpen: (open: boolean) => void
   setInvitesOpen: (open: boolean) => void
+  setProfileOpen: (open: boolean) => void
   setPaused: (paused: boolean) => void
   track: (id: string) => void
   setTrackStage: (stage: TrackStage) => void
@@ -88,6 +91,7 @@ export const useGame = create<GameState>((set) => ({
   statusOpen: false,
   connectOpen: false,
   invitesOpen: false,
+  profileOpen: false,
   paused: false,
   pausedAt: 0,
   trackId: null,
@@ -115,7 +119,7 @@ export const useGame = create<GameState>((set) => ({
   enter: () => set({ phase: 'play', enteredAt: performance.now() }),
   startCreate: () => {
     releaseMouse()
-    set({ phase: 'create', openId: null, searchOpen: false, paused: false, focusId: null, trackId: null, trackStage: null })
+    set({ phase: 'create', openId: null, searchOpen: false, profileOpen: false, paused: false, focusId: null, trackId: null, trackStage: null })
   },
   endCreate: () => set({ phase: 'play', enteredAt: performance.now() }),
   setLandmark: (landmark) => set({ landmark }),
@@ -132,15 +136,19 @@ export const useGame = create<GameState>((set) => ({
   },
   setStatusOpen: (statusOpen) => {
     if (statusOpen) releaseMouse()
-    set({ statusOpen })
+    set(statusOpen ? { statusOpen, openId: null, searchOpen: false, connectOpen: false, invitesOpen: false, profileOpen: false } : { statusOpen })
   },
   setConnectOpen: (connectOpen) => {
     if (connectOpen) releaseMouse()
-    set(connectOpen ? { connectOpen, openId: null, searchOpen: false, statusOpen: false, invitesOpen: false } : { connectOpen })
+    set(connectOpen ? { connectOpen, openId: null, searchOpen: false, statusOpen: false, invitesOpen: false, profileOpen: false } : { connectOpen })
   },
   setInvitesOpen: (invitesOpen) => {
     if (invitesOpen) releaseMouse()
-    set(invitesOpen ? { invitesOpen, openId: null, searchOpen: false, statusOpen: false, connectOpen: false } : { invitesOpen })
+    set(invitesOpen ? { invitesOpen, openId: null, searchOpen: false, statusOpen: false, connectOpen: false, profileOpen: false } : { invitesOpen })
+  },
+  setProfileOpen: (profileOpen) => {
+    if (profileOpen) releaseMouse()
+    set(profileOpen ? { profileOpen, openId: null, searchOpen: false, statusOpen: false, connectOpen: false, invitesOpen: false } : { profileOpen })
   },
   setPaused: (paused) => {
     if (paused) releaseMouse()

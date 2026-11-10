@@ -5,7 +5,8 @@ import { useNet } from '../net/useNet'
 import { useDirectory } from '../people/directory'
 import { useOnboarding } from '../onboarding'
 import { useAccess } from '../access'
-import { activeStatus, untilLabel, useMyStatus } from '../status'
+import { activeStatus, useMyStatus } from '../status'
+import { openYou } from './YouPanel'
 import { useCanSetStatus } from './StatusEditor'
 import { useGame } from '../store'
 import { isTyping } from '../player/input'
@@ -26,7 +27,7 @@ const canSignIn = (s: keyof typeof GHOST_COPY) => s === 'ghost' || s === 'review
 /** Bottom-right: the invisible guest's call to action, or your own status card. */
 export function YouCard() {
   const phase = useGame((s) => s.phase)
-  const busy = useGame((s) => !!s.openId || s.searchOpen || s.statusOpen || s.connectOpen || s.invitesOpen || s.paused)
+  const busy = useGame((s) => !!s.openId || s.searchOpen || s.statusOpen || s.connectOpen || s.invitesOpen || s.profileOpen || s.paused)
   const tracking = useGame((s) => !!s.trackId)
   const netStatus = useNet((s) => s.status)
   const startCreate = useGame((s) => s.startCreate)
@@ -62,11 +63,12 @@ export function YouCard() {
     signIn()
   }, [phase, signedIn])
 
-  // V = become visible / edit profile · L = sign in (not signed in only) — the mouse is captured while playing
+  // ghosts: V = become visible · L = sign in (not signed in only). Members' V / N / I live in the YOU panel.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const g = useGame.getState()
-      if ((e.code !== 'KeyV' && e.code !== 'KeyL') || isTyping(e) || g.phase !== 'play' || g.openId || g.searchOpen || g.statusOpen || g.connectOpen || g.invitesOpen || g.paused) return
+      if ((e.code !== 'KeyV' && e.code !== 'KeyL') || isTyping(e) || g.phase !== 'play' || g.openId || g.searchOpen || g.statusOpen || g.connectOpen || g.invitesOpen || g.profileOpen || g.paused) return
+      if (useDirectory.getState().me) return
       if (e.code === 'KeyV') return become()
       if (!useDirectory.getState().userId && canSignIn(useAccess.getState().status)) signIn()
     }
@@ -109,38 +111,29 @@ export function YouCard() {
 
   const live = me.status === 'approved'
   const elsewhere = live && netStatus === 'replaced'
+  const state = elsewhere ? 'LIVE IN ANOTHER TAB' : live ? 'LIVE ON THE MAP' : me.status === 'hidden' ? 'HIDDEN' : 'PENDING APPROVAL'
+  // one compact player tag; everything about you (profile, status, invites) lives in the YOU panel it opens
   return (
-    <div className="you slant">
+    <button className={`you slant${live && !elsewhere ? '' : ' you--off'}`} onClick={() => openYou('profile')} aria-label={`You: ${state}. Open your profile, status and invites`}>
       <span className="unslant you-body">
-        <span className="you-k">YOU</span>
-        <span className="you-name">{me.name.toUpperCase()}</span>
-        <span className={`you-status${live && !elsewhere ? ' you-status--live' : ''}`}>
-          <span className="np-dot" /> {elsewhere ? 'LIVE IN ANOTHER TAB' : live ? 'LIVE ON THE MAP' : me.status === 'hidden' ? 'HIDDEN' : 'PENDING APPROVAL'}
+        <span className="you-head">
+          <span className="np-dot" />
+          <span className="you-name">{me.name.toUpperCase()}</span>
+          <span className="keycap">V</span>
         </span>
-        {canStatus && myStatus && (
-          <span className="you-note">
-            {myStatus.emoji && <span className="you-note-e">{myStatus.emoji}</span>}
-            <span className="you-note-t">{myStatus.text}</span>
-            {myStatus.expiresAt && <em>{untilLabel(myStatus.expiresAt)}</em>}
-          </span>
+        {!(live && !elsewhere) ? (
+          <span className="you-state">{state}</span>
+        ) : (
+          canStatus &&
+          myStatus && (
+            <span className="you-note">
+              {myStatus.emoji && <span className="you-note-e">{myStatus.emoji}</span>}
+              <span className="you-note-t">{myStatus.text}</span>
+            </span>
+          )
         )}
-        <span className="you-actions">
-          {canStatus && (
-            <button onClick={() => useGame.getState().setStatusOpen(true)}>
-              {myStatus ? 'EDIT STATUS' : 'SET STATUS'} <span className="keycap">N</span>
-            </button>
-          )}
-          {live && (
-            <button onClick={() => useGame.getState().setInvitesOpen(true)}>
-              INVITES <span className="keycap">I</span>
-            </button>
-          )}
-          <button onClick={become}>
-            EDIT PROFILE <span className="keycap">V</span>
-          </button>
-        </span>
       </span>
-    </div>
+    </button>
   )
 }
 

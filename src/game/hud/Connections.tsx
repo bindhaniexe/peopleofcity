@@ -437,7 +437,7 @@ export function ConnectHud() {
     if (!unseen) return
     const id = setInterval(() => {
       const g = useGame.getState()
-      const busy = g.phase !== 'play' || !!g.openId || g.searchOpen || g.paused || g.connectOpen || g.statusOpen || g.invitesOpen || !!g.travel
+      const busy = g.phase !== 'play' || !!g.openId || g.searchOpen || g.paused || g.connectOpen || g.statusOpen || g.invitesOpen || g.profileOpen || !!g.travel
       if (!busy && document.visibilityState === 'visible') setNudge((n) => n + 1)
     }, NUDGE_MS)
     return () => clearInterval(id)
@@ -535,7 +535,7 @@ function walkTo(id: string) {
 /** Slides in from the right when a request or match arrives while you play (5G-C). */
 export function ConnectArrival() {
   const arrival = useConnect((s) => s.arrival)
-  const busy = useGame((s) => s.phase !== 'play' || !!s.openId || s.searchOpen || s.paused || s.connectOpen || !!s.travel || s.statusOpen)
+  const busy = useGame((s) => s.phase !== 'play' || !!s.openId || s.searchOpen || s.paused || s.connectOpen || !!s.travel || s.statusOpen || s.invitesOpen || s.profileOpen)
   const [hold, setHold] = useState(false)
   useEffect(() => {
     if (!arrival || hold) return
@@ -777,7 +777,7 @@ export function Connections() {
     const onKey = (e: KeyboardEvent) => {
       const g = useGame.getState()
       if (e.code !== 'KeyC' || e.repeat || isTyping(e) || g.phase !== 'play' || !isMemberNow()) return
-      if (g.openId || g.searchOpen || g.paused || g.portalOpen || g.travel || g.statusOpen || g.invitesOpen) return
+      if (g.openId || g.searchOpen || g.paused || g.portalOpen || g.travel || g.statusOpen || g.invitesOpen || g.profileOpen) return
       e.preventDefault()
       if (g.connectOpen) return g.setConnectOpen(false)
       const a = useConnect.getState().arrival

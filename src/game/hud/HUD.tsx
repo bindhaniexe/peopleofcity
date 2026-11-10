@@ -5,7 +5,6 @@ import { districtInfo } from '../districts/registry'
 import { ConnectHud } from './Connections'
 import { InvitesHud } from './Invites'
 import { Missions } from './Missions'
-import { useNet } from '../net/useNet'
 import { useClock } from '../scene/time'
 import { clockText, phaseAt } from '../scene/daylight'
 
@@ -18,11 +17,9 @@ export function HUD() {
   const phase = useGame((s) => s.phase)
   const landmark = useGame((s) => s.landmark)
   const locked = useGame((s) => s.pointerLocked)
-  const talking = useGame((s) => !!s.openId || s.searchOpen || s.paused || s.connectOpen || s.invitesOpen)
+  const talking = useGame((s) => !!s.openId || s.searchOpen || s.paused || s.connectOpen || s.invitesOpen || s.profileOpen)
   const district = useGame((s) => s.district)
   const info = districtInfo(district)
-  // round trip to the live city, while connected
-  const ping = useNet((s) => (s.status === 'live' ? s.ping : null))
   // Bengaluru's time, the same clock the light runs on
   const hour = useClock((s) => s.hour)
 
@@ -44,18 +41,6 @@ export function HUD() {
       </div>
 
       <div className="hud-status">
-        {ping !== null && (
-          <div className="slant hud-pingtag" title="Round trip to the live city">
-            <span className={`unslant hud-ping hud-ping--${ping < 80 ? 'good' : ping < 160 ? 'ok' : 'bad'}`}>
-              <span className="hud-ping-bars" aria-hidden>
-                <i />
-                <i />
-                <i />
-              </span>
-              {ping} MS
-            </span>
-          </div>
-        )}
         <div className="hud-find-row">
           <InvitesHud />
           <ConnectHud />

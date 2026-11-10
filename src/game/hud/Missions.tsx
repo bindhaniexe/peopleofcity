@@ -46,7 +46,7 @@ export function Missions() {
   const justDone = useMissions((s) => s.justDone)
   const district = useGame((s) => s.district)
   const busy = useGame(
-    (s) => !!s.openId || s.searchOpen || s.paused || s.connectOpen || s.invitesOpen || s.statusOpen || s.portalOpen || !!s.travel,
+    (s) => !!s.openId || s.searchOpen || s.paused || s.connectOpen || s.invitesOpen || s.profileOpen || s.statusOpen || s.portalOpen || !!s.travel,
   )
   const finished = allDone(done)
   const live = !!userId && !hidden && !retired
@@ -57,7 +57,7 @@ export function Missions() {
     const onKey = (e: KeyboardEvent) => {
       const g = useGame.getState()
       if (e.code !== 'KeyJ' || e.repeat || isTyping(e) || g.phase !== 'play') return
-      if (g.openId || g.searchOpen || g.paused || g.connectOpen || g.invitesOpen || g.statusOpen || g.portalOpen) return
+      if (g.openId || g.searchOpen || g.paused || g.connectOpen || g.invitesOpen || g.profileOpen || g.statusOpen || g.portalOpen) return
       useMissions.getState().toggle()
     }
     window.addEventListener('keydown', onKey)

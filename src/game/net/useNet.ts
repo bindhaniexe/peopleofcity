@@ -20,8 +20,6 @@ type Net = {
   online: Record<string, string>
   /** member ids live in your room (driven by the network, not wandering) */
   live: Set<string>
-  /** round trip to the room in ms (median of the last few), null until measured */
-  ping: number | null
 }
 
 export const useNet = create<Net>(() => ({
@@ -32,7 +30,6 @@ export const useNet = create<Net>(() => ({
   cityRooms: {},
   online: {},
   live: new Set(),
-  ping: null,
 }))
 
 if (process.env.NODE_ENV !== 'production' && typeof window !== 'undefined') {

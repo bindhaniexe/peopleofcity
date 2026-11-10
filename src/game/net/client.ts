@@ -14,8 +14,7 @@ import { useNet } from './useNet'
 
 const BASE = (process.env.NEXT_PUBLIC_REALTIME_URL ?? '').replace(/\/$/, '')
 const WS_BASE = BASE.replace(/^http/, 'ws')
-// the room answers 'ping' with 'pong' without waking up (setWebSocketAutoResponse), so this doubles as the
-// keepalive and measures the real round trip to the room
+// keepalive: the room answers 'ping' with 'pong' without waking up (setWebSocketAutoResponse)
 const PING_MS = 3_000
 const CITY_POLL_MS = 15_000
 const MAX_BACKOFF_MS = 30_000
@@ -27,8 +26,6 @@ let tries = 0
 let retry: ReturnType<typeof setTimeout> | null = null
 let sender: ReturnType<typeof setInterval> | null = null
 let keepalive: ReturnType<typeof setInterval> | null = null
-let pingAt = 0
-let pings: number[] = []
 let poller: ReturnType<typeof setInterval> | null = null
 let lastCorrect = 0
 /** away (stood still too long): where you stood, and the check that rejoins once you move */
@@ -76,8 +73,6 @@ function teardown() {
   if (sender) clearInterval(sender)
   if (keepalive) clearInterval(keepalive)
   sender = keepalive = null
-  pingAt = 0
-  pings = []
   if (ws) {
     ws.onclose = ws.onmessage = ws.onopen = ws.onerror = null
     try {
@@ -89,22 +84,12 @@ function teardown() {
   ws = null
   slots.clear()
   clearRemotes()
-  useNet.setState({ live: new Set(), room: null, hereNow: 0, ping: null })
+  useNet.setState({ live: new Set(), room: null, hereNow: 0 })
 }
 
 function sendPing(sock: WebSocket) {
   if (sock.readyState !== WebSocket.OPEN) return
-  pingAt = performance.now()
   sock.send('ping')
-}
-
-/** A pong: the round trip, shown as the median of the last five so one hiccup doesn't flash on screen. */
-function gotPong() {
-  if (!pingAt) return
-  pings = [...pings.slice(-4), performance.now() - pingAt]
-  pingAt = 0
-  const sorted = [...pings].sort((a, b) => a - b)
-  useNet.setState({ ping: Math.round(sorted[sorted.length >> 1]) })
 }
 
 function scheduleRetry() {
@@ -159,10 +144,7 @@ async function connect() {
     ws = sock
     sock.onopen = () => sock.send(encodeHello(t))
     sock.onmessage = (e) => {
-      if (typeof e.data === 'string') {
-        if (e.data === 'pong') gotPong()
-        return
-      }
+      if (typeof e.data === 'string') return // the keepalive's "pong"
       const m = decodeServer(e.data as ArrayBuffer)
       if (!m) return
       switch (m.op) {

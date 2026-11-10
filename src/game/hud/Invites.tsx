@@ -3,14 +3,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { inviteLink, useInvites, type Slot } from '../invites'
 import { useDirectory } from '../people/directory'
-import { isTyping, requestLook } from '../player/input'
+import { requestLook } from '../player/input'
+import { YouShell, YouTabs } from './YouPanel'
 import { useGame } from '../store'
 import { isTouch } from '../device'
 
 // YOUR INVITES (CLAUDE.md Phase 5D) — the ticket in the HUD, I, the INVITES button on your card, or the pause menu.
 // design.md §10: an ink panel over the live street, one chunky slanted card per slot.
-
-const isMemberNow = () => useDirectory.getState().me?.status === 'approved'
 
 const canShare = () => isTouch && typeof navigator !== 'undefined' && typeof navigator.share === 'function'
 
@@ -32,7 +31,11 @@ async function hand(s: Slot) {
   const sent = () => s.state === 'available' && void useInvites.getState().sent(s.code)
   if (canShare()) {
     try {
-      await navigator.share({ title: 'People of Bengaluru', text: 'You’re invited to the city of designers and builders.', url })
+      await navigator.share({
+        title: 'People of Bengaluru',
+        text: 'You’re invited to the city of designers and builders.',
+        url,
+      })
       return sent()
     } catch (e) {
       if ((e as DOMException)?.name === 'AbortError') return
@@ -164,19 +167,6 @@ export function Invites() {
     requestLook()
   }
 
-  // I = your invites (members), from the street
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const g = useGame.getState()
-      if (e.code !== 'KeyI' || e.repeat || isTyping(e) || g.phase !== 'play' || !isMemberNow()) return
-      if (g.openId || g.searchOpen || g.paused || g.portalOpen || g.travel || g.statusOpen || g.connectOpen) return
-      e.preventDefault()
-      g.setInvitesOpen(!g.invitesOpen)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [])
-
   useEffect(() => {
     if (open) void useInvites.getState().load()
   }, [open])
@@ -216,49 +206,39 @@ export function Invites() {
   if (phase !== 'play' || !open || !member) return null
 
   return (
-    <div className="cr iv">
-      <div className="select-shade" />
-      <div className="cr-panel iv-panel">
-        <div className="cr-top">
-          <span className="cr-tag slant">
-            <span className="unslant">YOUR INVITES</span>
+    <YouShell>
+      <YouTabs active="invites" onClose={close} />
+      <h2 className="cr-title">BRING SOMEONE IN</h2>
+      <p className="cr-copy st-lede">People you invite go live as soon as they’re done. No review.</p>
+      {loaded && slots.length > 0 && (
+        <div className="iv-tally">
+          <span className="iv-tally-pips" aria-hidden>
+            {slots.map((s) => (
+              <i key={s.code} className={`slant iv-pip iv-pip--${s.state === 'used' ? 'used' : 'available'}`} />
+            ))}
           </span>
-          <button className="pp-close st-close" onClick={close} aria-label="Close">
-            <span className="keycap">ESC</span>
-          </button>
+          <span>
+            <b>{ready}</b> OF {slots.length} LEFT
+          </span>
         </div>
-        <h2 className="cr-title">BRING SOMEONE IN</h2>
-        <p className="cr-copy st-lede">People you invite go live as soon as they’re done. No review.</p>
-        {loaded && slots.length > 0 && (
-          <div className="iv-tally">
-            <span className="iv-tally-pips" aria-hidden>
-              {slots.map((s) => (
-                <i key={s.code} className={`slant iv-pip iv-pip--${s.state === 'used' ? 'used' : 'available'}`} />
-              ))}
-            </span>
-            <span>
-              <b>{ready}</b> OF {slots.length} LEFT
-            </span>
-          </div>
-        )}
+      )}
 
-        <div className="iv-list" ref={list}>
-          {error && !loaded ? (
-            <div className="cn-empty">
-              Couldn’t load your invites.{' '}
-              <button className="gate-switch" onClick={() => useInvites.getState().load()}>
-                RETRY
-              </button>
-            </div>
-          ) : !loaded ? (
-            <p className="cn-empty">Loading your invites…</p>
-          ) : slots.length === 0 ? (
-            <p className="cn-empty">No invites yet. Every member gets two.</p>
-          ) : (
-            slots.map((s, i) => (s.state === 'used' ? <Used key={s.code} s={s} n={i + 1} /> : <Code key={s.code} s={s} n={i + 1} />))
-          )}
-        </div>
+      <div className="iv-list" ref={list}>
+        {error && !loaded ? (
+          <div className="cn-empty">
+            Couldn’t load your invites.{' '}
+            <button className="gate-switch" onClick={() => useInvites.getState().load()}>
+              RETRY
+            </button>
+          </div>
+        ) : !loaded ? (
+          <p className="cn-empty">Loading your invites…</p>
+        ) : slots.length === 0 ? (
+          <p className="cn-empty">No invites yet. Every member gets two.</p>
+        ) : (
+          slots.map((s, i) => (s.state === 'used' ? <Used key={s.code} s={s} n={i + 1} /> : <Code key={s.code} s={s} n={i + 1} />))
+        )}
       </div>
-    </div>
+    </YouShell>
   )
 }

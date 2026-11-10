@@ -23,6 +23,7 @@ import { YouCard, Toast } from './hud/YouCard'
 import { StatusEditor } from './hud/StatusEditor'
 import { ConnectArrival, Connections } from './hud/Connections'
 import { Invites } from './hud/Invites'
+import { ProfilePanel } from './hud/YouPanel'
 import { Session } from './Session'
 import { Net } from './net/Net'
 import { LiveElsewhere } from './hud/LiveElsewhere'
@@ -106,6 +107,7 @@ export default function Game() {
       <Connections />
       <ConnectArrival />
       <Invites />
+      <ProfilePanel />
       <Create />
       <Pause />
       <Toast />
