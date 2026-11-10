@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useDirectory } from '../people/directory'
 import { signOut, useOnboarding } from '../onboarding'
 import { openYou } from './YouPanel'
@@ -12,23 +12,28 @@ import { useConnect } from '../connect'
 import { useInvites } from '../invites'
 import { activeStatus, useMyStatus } from '../status'
 import { useCanSetStatus } from './StatusEditor'
+import { isTouch } from '../device'
 import { useMissions } from '../missionsStore'
 import { fullscreenMode, iphoneBrowser, isFullscreen, toggleFullscreen, type FullscreenMode } from '../fullscreen'
 
-const CONTROLS: [string[], string][] = [
-  [['W', 'A', 'S', 'D'], 'MOVE'],
-  [['SHIFT'], 'RUN'],
-  [['MOUSE'], 'LOOK AROUND'],
-  [['E'], 'TALK TO SOMEONE'],
-  [['F'], 'FIND SOMEONE'],
-  [['C'], 'CONNECTIONS'],
-  [['N'], 'SET STATUS'],
-  [['I'], 'YOUR INVITES'],
-  [['V'], 'BECOME VISIBLE / EDIT PROFILE'],
-  [['L'], 'SIGN IN'],
-  [['M'], 'MUTE SOUND'],
-  [['ESC'], 'PAUSE'],
-]
+/** The keys that apply to you right now (keyboard only: phones have no CONTROLS section). */
+function controlsFor(o: { member: boolean; hasProfile: boolean; signedIn: boolean; canStatus: boolean }): [string[], string][] {
+  return [
+    [['W', 'A', 'S', 'D'], 'MOVE'],
+    [['SHIFT'], 'RUN'],
+    [['MOUSE'], 'LOOK'],
+    [['E'], 'TALK'],
+    [['F'], 'FIND SOMEONE'],
+    [['C'], 'CONNECTIONS'],
+    [['V'], o.hasProfile ? 'YOUR PROFILE' : 'BECOME VISIBLE'],
+    ...(o.canStatus ? ([[['N'], 'STATUS']] as [string[], string][]) : []),
+    ...(o.member ? ([[['I'], 'INVITES']] as [string[], string][]) : []),
+    ...(o.member ? ([[['J'], 'MISSIONS']] as [string[], string][]) : []),
+    ...(!o.signedIn ? ([[['L'], 'SIGN IN']] as [string[], string][]) : []),
+    [['M'], 'MUTE'],
+    [['ESC'], 'PAUSE'],
+  ]
+}
 
 /** Esc while exploring. Opens from plain play only — profile, finder and creator keep their own Esc. */
 export function Pause() {
@@ -43,12 +48,21 @@ export function Pause() {
   // Day Zero missions: hide or bring back the tracker (members, until they're all done)
   const missions = useMissions((s) => (s.userId && !s.retired ? (s.hidden ? 'show' : 'hide') : null))
   const hasStatus = useMyStatus((s) => !!activeStatus(s.status))
-  const [controls, setControls] = useState(false)
-  const [sound, setSound] = useState(false)
+  // one section open at a time, so the menu stays short; the opened one scrolls into view
+  const [section, setSection] = useState<'sound' | 'controls' | 'fs' | null>(null)
+  const sound = section === 'sound'
+  const controls = section === 'controls'
+  const fsHelp = section === 'fs'
+  const toggle = (s: 'sound' | 'controls' | 'fs') => setSection((cur) => (cur === s ? null : s))
+  const body = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!section) return
+    const el = body.current?.querySelector(`[data-section="${section}"]`)
+    el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  }, [section])
   const [confirmOut, setConfirmOut] = useState(false)
   const [fsMode, setFsMode] = useState<FullscreenMode>(null)
   const [fsOn, setFsOn] = useState(false)
-  const [fsHelp, setFsHelp] = useState(false)
 
   const resume = () => {
     setPaused(false)
@@ -101,10 +115,8 @@ export function Pause() {
 
   useEffect(() => {
     if (!paused) {
-      setControls(false)
-      setSound(false)
+      setSection(null)
       setConfirmOut(false)
-      setFsHelp(false)
     } else setFsMode(fullscreenMode())
   }, [paused])
 
@@ -166,7 +178,7 @@ export function Pause() {
           </span>
         </header>
 
-        <div className="pause-body">
+        <div className="pause-body" ref={body}>
           <button className="pause-row pause-row--primary" onClick={resume} autoFocus>
             <span className="pause-label">RESUME</span>
             <span className="keycap">ESC</span>
@@ -230,31 +242,33 @@ export function Pause() {
           )}
           {fsMode === 'homescreen' && (
             <>
-              <button className={`pause-row${fsHelp ? ' pause-row--open' : ''}`} onClick={() => setFsHelp((v) => !v)} aria-expanded={fsHelp}>
+              <button className={`pause-row${fsHelp ? ' pause-row--open' : ''}`} onClick={() => toggle('fs')} aria-expanded={fsHelp}>
                 <span className="pause-label">FULL SCREEN</span>
                 <span className="pause-caret">{fsHelp ? '▴' : '▾'}</span>
               </button>
               {fsHelp && (
-                <div className="pause-controls pause-fs">
+                <div className="pause-controls pause-fs" data-section="fs">
                   <HomeScreenSteps />
                 </div>
               )}
             </>
           )}
 
-          <button className={`pause-row${sound ? ' pause-row--open' : ''}`} onClick={() => setSound((v) => !v)} aria-expanded={sound}>
+          <button className={`pause-row${sound ? ' pause-row--open' : ''}`} onClick={() => toggle('sound')} aria-expanded={sound}>
             <span className="pause-label">SOUND</span>
             <span className="pause-caret">{sound ? '▴' : '▾'}</span>
           </button>
           {sound && <SoundSettings />}
 
-          <button className={`pause-row${controls ? ' pause-row--open' : ''}`} onClick={() => setControls((c) => !c)} aria-expanded={controls}>
-            <span className="pause-label">CONTROLS</span>
-            <span className="pause-caret">{controls ? '▴' : '▾'}</span>
-          </button>
-          {controls && (
-            <div className="pause-controls">
-              {CONTROLS.map(([ks, what]) => (
+          {!isTouch && (
+            <button className={`pause-row${controls ? ' pause-row--open' : ''}`} onClick={() => toggle('controls')} aria-expanded={controls}>
+              <span className="pause-label">CONTROLS</span>
+              <span className="pause-caret">{controls ? '▴' : '▾'}</span>
+            </button>
+          )}
+          {controls && !isTouch && (
+            <div className="pause-controls pause-keygrid" data-section="controls">
+              {controlsFor({ member: me?.status === 'approved', hasProfile: !!me, signedIn, canStatus }).map(([ks, what]) => (
                 <div key={what} className="pause-ctl">
                   <span className="pause-keys">
                     {ks.map((k) => (
@@ -339,7 +353,7 @@ function SoundSettings() {
   const muted = useAudio((s) => s.muted)
   const set = useAudio((s) => s.set)
   return (
-    <div className="pause-controls snd">
+    <div className="pause-controls snd" data-section="sound">
       <Slider label="MASTER" k="master" />
       <Slider label="MUSIC" k="music" />
       <Slider label="EFFECTS & CITY" k="sfx" />

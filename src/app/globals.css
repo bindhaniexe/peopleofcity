@@ -2284,7 +2284,10 @@ textarea {
 }
 
 .pause-card {
+  display: flex;
+  flex-direction: column;
   width: min(500px, calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
   background: var(--ink);
   color: var(--cream);
   clip-path: polygon(20px 0, 100% 0, calc(100% - 20px) 100%, 0 100%);
@@ -2326,7 +2329,42 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 246, 229, 0.25) transparent;
   padding: 22px 40px 8px 44px;
+}
+
+.pause-body > * {
+  flex: none;
+}
+
+.pause-bar,
+.pause-foot {
+  flex: none;
+}
+
+/* CONTROLS: a two-column key grid, half the height of a list */
+.pause-controls.pause-keygrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 18px;
+}
+
+.pause-keygrid .pause-keys {
+  min-width: 0;
+}
+
+.pause-keygrid .pause-ctl {
+  gap: 10px;
+  font-size: 13px;
+}
+
+/* MOVE (four keys) gets the full width */
+.pause-keygrid .pause-ctl:first-child {
+  grid-column: 1 / -1;
 }
 
 .pause-row {
@@ -2365,7 +2403,7 @@ textarea {
 .pause-row--primary {
   background: var(--saffron);
   color: var(--ink);
-  border-left-color: var(--ink);
+  border-left-color: var(--saffron);
 }
 
 .pause-row--primary:hover,
@@ -2452,9 +2490,12 @@ textarea {
   margin-top: 4px;
 }
 
+/* outline drawn on the border box so the row lines up with the others */
 .pause-row--danger {
   margin-top: 8px;
   background: transparent;
+  border-left-width: 0;
+  padding-left: 23px;
   box-shadow: inset 0 0 0 2px rgba(255, 90, 54, 0.5);
   color: #ffb4a3;
 }
@@ -2462,7 +2503,9 @@ textarea {
 .pause-row--danger:hover,
 .pause-row--danger:focus-visible {
   background: rgba(255, 90, 54, 0.14);
-  border-left-color: var(--action);
+  box-shadow:
+    inset 5px 0 0 var(--action),
+    inset 0 0 0 2px rgba(255, 90, 54, 0.5);
 }
 
 .pause-row--confirm {
@@ -2828,7 +2871,7 @@ html.touch body {
 html.touch .find-results,
 html.touch .cr-panel,
 html.touch .pp-inner,
-html.touch .pause-card,
+html.touch .pause-body,
 html.touch .cr-chips,
 html.touch .find-chips {
   touch-action: pan-x pan-y;
@@ -3215,8 +3258,7 @@ html.touch .find-chips {
   /* pause */
   .pause-card {
     width: calc(100vw - 24px);
-    max-height: calc(100dvh - 24px);
-    overflow-y: auto;
+    max-height: calc(100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
     clip-path: none;
   }
 
@@ -7118,4 +7160,14 @@ html.touch .ch-list {
 
 .you-pp .cr-title {
   margin-top: 28px;
+}
+
+/* touch: RESUME is focused on open, but the keyboard focus nudge + stripe mean nothing without a keyboard */
+html.touch .pause-row:focus-visible {
+  transform: none;
+}
+
+html.touch .pause-row--primary:focus-visible {
+  background: var(--saffron);
+  border-left-color: var(--saffron);
 }
