@@ -1087,8 +1087,8 @@ Two databases, never shared:
 
 | Database | Ref | Used by |
 |---|---|---|
-| Production (main project, Pro) | taidgykcrdigmmgjyshv | main → peopleofbengaluru.com (Vercel Production), room server pob-realtime |
-| Staging (persistent branch "staging") | rwhjknklzedimfzuetuv | dev → dev.peopleofbengaluru.com + previews (Vercel Preview), room server pob-realtime-staging, local dev (.env.local, `npm run rt:dev`) |
+| Production (main project, Pro) | YOUR_PRODUCTION_PROJECT_REF | main → peopleofbengaluru.com (Vercel Production), room server pob-realtime |
+| Staging (persistent branch "staging") | YOUR_STAGING_PROJECT_REF | dev → dev.peopleofbengaluru.com + previews (Vercel Preview), room server pob-realtime-staging, local dev (.env.local, `npm run rt:dev`) |
 
 - Each has its own users, data, keys, Vault secrets (site_url, cron_secret) and Auth settings. Staging starts empty: sign up there to test.
 - Schema changes are files in supabase/migrations, named `<version>_<name>.sql`; the version is the one in each database's history (supabase_migrations.schema_migrations), so a file is never applied twice. Apply to staging first, test on dev, then to production when main deploys.

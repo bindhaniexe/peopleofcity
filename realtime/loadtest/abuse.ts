@@ -18,7 +18,7 @@ const secret = arg('secret', '')
 const realMember = arg('member', '')
 const envName = arg('env', 'dev')
 const origin = arg('origin', 'http://localhost:3000')
-const SUPABASE = 'https://taidgykcrdigmmgjyshv.supabase.co'
+const SUPABASE = 'https://YOUR_PRODUCTION_PROJECT_REF.supabase.co'
 const REAL_KID = '1479e98d-e774-442b-9044-f7e8ebcb012b'
 const room = 'hsr#1'
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
@@ -58,7 +58,7 @@ const attackerSigned = await new SignJWT(claims).setProtectedHeader({ alg: 'ES25
 const unsigned = new UnsecuredJWT(claims).encode()
 const hsWithPublicKey = await new SignJWT(claims)
   .setProtectedHeader({ alg: 'HS256' })
-  .sign(new TextEncoder().encode('sb_publishable_XQZgF2VVIZ4sdvv8DnwQcA_KuOkyNmv'))
+  .sign(new TextEncoder().encode('sb_publishable_YOUR_KEY'))
 const { privateKey: k2 } = await generateKeyPair('ES256')
 const otherIssuer = await new SignJWT({ ...claims, iss: 'https://evil.supabase.co/auth/v1' }).setProtectedHeader({ alg: 'ES256' }).sign(k2)
 
