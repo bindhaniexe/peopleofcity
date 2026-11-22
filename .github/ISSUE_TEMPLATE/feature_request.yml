@@ -1,0 +1,9 @@
+name: Idea
+description: Something the city should have
+labels: [idea]
+body:
+  - type: textarea
+    attributes: { label: The idea, description: "What should be possible, and why it makes the city better to walk through." }
+    validations: { required: true }
+  - type: textarea
+    attributes: { label: How it could look or work }

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Show us your city
+    url: https://github.com/peopleofcity/peopleofcity/discussions
+    about: Built People of your city? Share it in Discussions.
+  - name: Report a security issue
+    url: https://github.com/peopleofcity/peopleofcity/security/advisories/new
+    about: Privately, never in a public issue.
