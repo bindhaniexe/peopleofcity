@@ -24,6 +24,8 @@ Fork it and make **People of _your_ city**: your streets, your landmarks, your p
 
 You'll need Node 22, a [Supabase](https://supabase.com) project, and a [Cloudflare](https://cloudflare.com) account for the live city.
 
+What's **not** included: People of Bengaluru's database migrations, its email templates and sending, and its payments. In their place are small fillers (`src/lib/server/email/send.ts`, `src/lib/server/dodo.ts`) that send nothing, so you plug in your own.
+
 ```bash
 npm install
 cp .env.example .env.local     # fill in your Supabase URL and keys
@@ -31,7 +33,8 @@ npm run dev                    # the city at http://localhost:3000
 npm test                       # the tests
 ```
 
-- **Database:** run the files in `supabase/migrations/` in order, in your project's SQL editor.
+- **Database:** bring your own. The code shows what it reads and writes (profiles, invites, applications, connections, messages); design your tables in Supabase with row-level security on.
+- **Email and payments:** replace the fillers with your provider (any transactional email service; any payment provider, if you want a paid application).
 - **Live city (optional):** put your Supabase URL and publishable key in `realtime/wrangler.toml` (the `YOUR_…` placeholders), then `npm run rt:dev`, and set `NEXT_PUBLIC_REALTIME_URL=http://localhost:8787` in `.env.local`.
 
 ## License
