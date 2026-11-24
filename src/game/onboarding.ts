@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { DEFAULT_CHARACTER, genderOf, type Gender } from './characters/roster'
 import { refreshDirectory, useDirectory } from './people/directory'
 import { getDistrict } from './districts/active'
-import { homeDistrict, placeName } from './districts/registry'
+import { DEFAULT_DISTRICT, districtInfo, homeDistrict, placeName } from './districts/registry'
 import { APPLICATIONS_FREE } from '@/lib/apply'
 
 // "Become visible" — character-creation style onboarding (CLAUDE.md §1).
@@ -85,7 +85,7 @@ const EMPTY: Draft = {
   portfolio: '',
   linkedin: '',
   x: '',
-  location: 'Koramangala',
+  location: districtInfo(DEFAULT_DISTRICT).name,
   spot: '',
   pendingSubmit: false,
   pendingInvite: '',

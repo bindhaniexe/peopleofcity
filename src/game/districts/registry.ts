@@ -1,58 +1,68 @@
-import { C } from '@/lib/palette'
 
-// The districts of the city (CLAUDE.md Phase 6). Built one at a time —
-// unbuilt districts show as "coming soon" at the portal.
+import { ROOM_DISTRICTS, type RoomDistrict } from '../../../shared/net/config'
 
-export type DistrictId = 'koramangala' | 'hsr' | 'bellandur' | 'whitefield' | 'domlur'
+export const DEFAULT_DISTRICT = ROOM_DISTRICTS[0]
+export const CITY_MARK = '@'
 
+export type DistrictId = RoomDistrict | 'old-town' | 'unit-ii'
 export type DistrictInfo = {
   id: DistrictId
-  /** Matches a profile's `location`. */
   name: string
   title: string
-  kn: string
+  odia: string
   identity: string
   accent: string
   built: boolean
 }
 
 export const DISTRICTS: DistrictInfo[] = [
-  { id: 'koramangala', name: 'Koramangala', title: 'KORAMANGALA', kn: 'ಕೋರಮಂಗಲ', identity: 'Startup · Design · Founder district', accent: C.FLAME, built: true },
-  { id: 'hsr', name: 'HSR Layout', title: 'HSR LAYOUT', kn: 'ಎಚ್‌ಎಸ್‌ಆರ್ ಲೇಔಟ್', identity: 'Builder · Indie district', accent: '#1F8A70', built: true },
-  { id: 'bellandur', name: 'Bellandur', title: 'BELLANDUR', kn: 'ಬೆಳ್ಳಂದೂರು', identity: 'Tech corridor district', accent: C.BMTC_BLUE, built: false },
-  { id: 'whitefield', name: 'Whitefield', title: 'WHITEFIELD', kn: 'ವೈಟ್‌ಫೀಲ್ಡ್', identity: 'Enterprise · Tech district', accent: '#3E5C8A', built: false },
-  { id: 'domlur', name: 'Domlur', title: 'DOMLUR', kn: 'ದೊಮ್ಮಲೂರು', identity: 'Old meets new', accent: C.TERRACOTTA, built: false },
+  { id: 'saheed-nagar', name: 'Saheed Nagar', title: 'SAHEED NAGAR', odia: 'ଶହୀଦ ନଗର', identity: 'Janpath · Shops · Neighbourhood lanes', accent: '#C45233', built: true },
+  { id: 'patia', name: 'Patia', title: 'PATIA', odia: 'ପଟିଆ', identity: 'KIIT · Campus shops · Infocity', accent: '#207666', built: true },
+  { id: 'old-town', name: 'Old Town', title: 'OLD TOWN', odia: 'ଏକାମ୍ର କ୍ଷେତ୍ର', identity: 'Ekamra Kshetra · Bindusagar', accent: '#A45F3C', built: false },
+  { id: 'unit-ii', name: 'Unit II', title: 'UNIT II', odia: 'ୟୁନିଟ୍ ୨', identity: 'Market Building · Street stalls', accent: '#996423', built: false },
 ]
 
-export const districtInfo = (id: DistrictId) => DISTRICTS.find((d) => d.id === id)!
+export const districtInfo = (id: DistrictId) => DISTRICTS.find((district) => district.id === id)!
 
-/** Where a person lives in the game. Unknown / legacy locations count as Koramangala. */
-export function districtOfLocation(location: string): DistrictInfo {
-  return DISTRICTS.find((d) => d.name.toLowerCase() === location.toLowerCase()) ?? DISTRICTS[0]
+const aliases: ReadonlyMap<string, DistrictId> = new Map([
+  ['sahid nagar', 'saheed-nagar'], ['shaheed nagar', 'saheed-nagar'], ['saheednagar', 'saheed-nagar'],
+  ['ekamra kshetra', 'old-town'], ['market building', 'unit-ii'], ['unit 2', 'unit-ii'],
+])
+const legacyAreas = new Set([
+  'koramangala', 'hsr', 'hsr layout', 'bellandur', 'whitefield', 'domlur',
+  'jayanagar', 'indiranagar', 'malleshwaram', 'bengaluru', 'bangalore',
+])
+
+function matchDistrict(location: string) {
+  const name = location.trim().toLowerCase()
+  return DISTRICTS.find((district) => district.name.toLowerCase() === name || district.id === aliases.get(name))
 }
 
-/**
- * Where someone says they are. profiles.location is one text field (≤ 40): a district's name, another
- * area of Bengaluru as typed ("Jayanagar"), or another city with a leading "@" ("@Pune"). Anything that
- * isn't a built district visits Koramangala.
- */
-export type PlaceKind = 'district' | 'blr' | 'city'
-export const CITY_MARK = '@'
+export function districtOfLocation(location: string): DistrictInfo {
+  return matchDistrict(location) ?? districtInfo(DEFAULT_DISTRICT)
+}
+
+export type PlaceKind = 'district' | 'local' | 'city'
 
 export function placeKind(location: string): PlaceKind {
-  if (location.startsWith(CITY_MARK)) return 'city'
-  return DISTRICTS.some((d) => d.name.toLowerCase() === location.toLowerCase()) ? 'district' : 'blr'
+  if (location.startsWith(CITY_MARK) || legacyAreas.has(location.trim().toLowerCase())) return 'city'
+  return matchDistrict(location) ? 'district' : 'local'
 }
 
-/** The place as typed, without the city mark. */
-export const placeName = (location: string) => (location.startsWith(CITY_MARK) ? location.slice(1) : location)
+export const placeName = (location: string) => location.startsWith(CITY_MARK) ? location.slice(1) : location
 
-/** For display: "Jayanagar, Bengaluru" · "Pune". */
-export const placeLabel = (location: string) =>
-  placeKind(location) === 'city' ? placeName(location) : `${placeName(location)}, Bengaluru`
+export function placeLabel(location: string) {
+  if (location.startsWith(CITY_MARK)) return placeName(location)
+  const name = location.trim().toLowerCase()
+  if (name === 'bengaluru' || name === 'bangalore') return 'Bengaluru'
+  return `${location}, ${legacyAreas.has(name) ? 'Bengaluru' : 'Bhubaneswar'}`
+}
 
-/** The district a person actually appears in right now (visitors stay in Koramangala). */
-export function homeDistrict(location: string): DistrictId {
-  const d = districtOfLocation(location)
-  return d.built ? d.id : 'koramangala'
+export function homeDistrict(location: string): RoomDistrict {
+  const id = matchDistrict(location)?.id
+  return ROOM_DISTRICTS.find((district) => district === id) ?? DEFAULT_DISTRICT
+}
+
+export function districtForSearch(location: string, onlineDistrict?: string): RoomDistrict {
+  return ROOM_DISTRICTS.find((district) => district === onlineDistrict) ?? homeDistrict(location)
 }

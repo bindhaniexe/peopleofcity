@@ -1,7 +1,7 @@
 # LIVE CITY room server (CLAUDE.md Phase 8A). One Room per district shard, one City for counts + shard choice.
 # Local: npm run dev (port 8787) · deploy: npm run deploy:staging / deploy:production
 
-name = "pob-realtime-dev"
+name = "peopleofbbsr-realtime-dev"
 main = "src/index.ts"
 compatibility_date = "2026-09-01"
 
@@ -49,7 +49,7 @@ invocation_logs = false
 
 # --- staging: previews + local dev against a deployed room server; load tests run here ---
 [env.staging]
-name = "pob-realtime-staging"
+name = "peopleofbbsr-realtime-staging"
 
 [env.staging.observability]
 enabled = true
@@ -61,7 +61,8 @@ ENV_NAME = "staging"
 # the staging database (Supabase branch "staging"), so dev-site logins are checked against it
 SUPABASE_URL = "https://YOUR_STAGING_PROJECT_REF.supabase.co"
 SUPABASE_PUBLISHABLE_KEY = "sb_publishable_YOUR_KEY"
-ALLOWED_ORIGINS = "http://localhost:3000,https://dev.peopleofbengaluru.com,https://peopleofbengaluru-dev.vercel.app"
+# Add the Bhubaneswar staging site origin before deploying.
+ALLOWED_ORIGINS = "http://localhost:3000,http://127.0.0.1:3000"
 
 [[env.staging.durable_objects.bindings]]
 name = "ROOM"
@@ -87,7 +88,7 @@ namespace_id = "8112"
 
 # --- production ---
 [env.production]
-name = "pob-realtime"
+name = "peopleofbbsr-realtime"
 
 [env.production.observability]
 enabled = true
@@ -98,7 +99,8 @@ invocation_logs = false
 ENV_NAME = "production"
 SUPABASE_URL = "https://YOUR_PRODUCTION_PROJECT_REF.supabase.co"
 SUPABASE_PUBLISHABLE_KEY = "sb_publishable_YOUR_KEY"
-ALLOWED_ORIGINS = "https://peopleofbengaluru.vercel.app,https://peopleofbengaluru.com,https://www.peopleofbengaluru.com"
+# Set the exact Bhubaneswar public site origins before deploying.
+ALLOWED_ORIGINS = ""
 
 [[env.production.durable_objects.bindings]]
 name = "ROOM"

@@ -1,119 +1,90 @@
+
 'use client'
 
 import * as THREE from 'three'
-import { useLayoutEffect, useMemo, useRef } from 'react'
+import { useMemo } from 'react'
 import { C } from '@/lib/palette'
-import { BASE, ROAD } from '../layout'
-import { mat, texMat } from '../materials'
-import { plane, rbox } from '../geometry'
-import { asphaltTex, paverTex, repeated } from '../textures'
+import { districtRect, type Block, type Rect, groundTiles } from '../districts/blocks'
+import { asphaltTex, grassTex, paverTex } from '../textures'
+import { texMat } from '../materials'
+import { Box } from './kit'
 
-const EXTENT = 120
-const paint = () => mat(C.ROAD_PAINT, { rough: 0.9, grade: false })
-
-function Mark({ x, z, w, l, rot = 0 }: { x: number; z: number; w: number; l: number; rot?: number }) {
-  return <mesh geometry={plane(w, l)} material={paint()} position={[x, 0.012, z]} rotation={[-Math.PI / 2, 0, rot]} receiveShadow />
+/** UVs stay in world space across tiles, so the pavers line up at every junction. */
+function surfaceGeometry({ x0, x1, z0, z1 }: Rect, y: number, repeat: number) {
+  const geometry = new THREE.PlaneGeometry(x1 - x0, z1 - z0)
+  geometry.rotateX(-Math.PI / 2)
+  geometry.translate((x0 + x1) / 2, y, (z0 + z1) / 2)
+  const vertices = geometry.attributes.position
+  const uv = geometry.attributes.uv
+  for (let i = 0; i < uv.count; i++) uv.setXY(i, vertices.getX(i) / repeat, -vertices.getZ(i) / repeat)
+  return geometry
 }
 
-function RoadMarkings() {
-  const marks: { x: number; z: number; w: number; l: number; rot?: number }[] = []
-  // centre dashes
-  for (let d = 10; d < EXTENT; d += 6) {
-    for (const s of [1, -1]) {
-      marks.push({ x: 0, z: s * d, w: 0.16, l: 3 })
-      marks.push({ x: s * d, z: 0, w: 0.16, l: 3, rot: Math.PI / 2 })
-    }
+function roadExtensions(roads: Rect[]) {
+  const length = 45
+  return roads.flatMap((road) => {
+    const extensions: Rect[] = []
+    if (road.x0 === districtRect.x0) extensions.push({ ...road, x0: road.x0 - length, x1: road.x0 })
+    if (road.x1 === districtRect.x1) extensions.push({ ...road, x0: road.x1, x1: road.x1 + length })
+    if (road.z0 === districtRect.z0) extensions.push({ ...road, z0: road.z0 - length, z1: road.z0 })
+    if (road.z1 === districtRect.z1) extensions.push({ ...road, z0: road.z1, z1: road.z1 + length })
+    return extensions.map((rect) => surfaceGeometry(rect, 0, 5))
+  })
+}
+
+export function Ground({ block }: { block: Block }) {
+  const materials = {
+    asphalt: texMat('district-asphalt', asphaltTex, { rough: 0.96 }),
+    pavers: texMat('district-pavers', paverTex, { rough: 0.92 }),
+    grass: texMat('district-grass', grassTex, { rough: 0.97 }),
   }
-  // zebra crossings + stop lines on all four approaches
-  for (const s of [1, -1]) {
-    for (let i = -4; i <= 4; i++) {
-      marks.push({ x: i * 1.05, z: s * 7.7, w: 0.55, l: 2.8 })
-      marks.push({ x: s * 7.7, z: i * 1.05, w: 0.55, l: 2.8, rot: Math.PI / 2 })
-    }
-    marks.push({ x: -s * 2.5, z: s * 9.7, w: 4.6, l: 0.3 })
-    marks.push({ x: s * 9.7, z: s * 2.5, w: 0.3, l: 4.6 })
-  }
+  const extensions = useMemo(() => roadExtensions(block.roads), [block])
+  const pieces = useMemo(() => {
+    const tiles = groundTiles(block)
+    const byOrigin = new Map(tiles.map((tile) => [`${tile.rect.x0},${tile.rect.z0}`, tile]))
+    return tiles.map(({ rect, height, surface }) => ({
+      surface,
+      geometry: surfaceGeometry(rect, height, surface === 'pavers' ? 2.8 : 5),
+      edges: [
+        { next: byOrigin.get(`${rect.x1},${rect.z0}`), x: rect.x1, z: (rect.z0 + rect.z1) / 2, w: 0.13, d: rect.z1 - rect.z0 },
+        { next: byOrigin.get(`${rect.x0},${rect.z1}`), x: (rect.x0 + rect.x1) / 2, z: rect.z1, w: rect.x1 - rect.x0, d: 0.13 },
+      ].filter(({ next }) => next && next.height !== height).map((edge) => ({
+        ...edge,
+        low: Math.min(height, edge.next!.height),
+        high: Math.max(height, edge.next!.height),
+      })),
+    }))
+  }, [block])
+
   return (
     <>
-      {marks.map((m, i) => (
-        <Mark key={i} {...m} />
+      <Box s={[500, 0.12, 500]} p={[0, -0.16, 0]} c="#858566" shadow={false} radius={0.02} />
+      {extensions.map((geometry) => <mesh key={geometry.id} geometry={geometry} material={materials.asphalt} receiveShadow />)}
+      {pieces.map(({ surface, geometry, edges }, i) => (
+        <group key={i}>
+          <mesh geometry={geometry} material={materials[surface]} receiveShadow />
+          {edges.map(({ x, z, w, d, low, high }) => (
+            <Box key={`${x},${z}`} s={[w, high - low + 0.008, d]} p={[x, (low + high) / 2, z]} c={low === 0 ? C.CONCRETE_AGED : C.WALL_WHITE} radius={0.018} shadow={false} />
+          ))}
+        </group>
       ))}
+      {block.lanes.map(({ x, z, length, rot }) => (
+        <group key={`${x},${z}`} position={[x, 0.012, z]} rotation={[0, rot, 0]}>
+          {Array.from({ length: Math.floor(length / 4) }, (_, i) => (
+            <Box key={i} s={[2, 0.013, 0.115]} p={[2.5 + i * 4 - length / 2, 0, 0]} c="#DDD6BC" grade={false} shadow={false} />
+          ))}
+        </group>
+      ))}
+      {block.crossings.map(({ x, z, width, rot }) => {
+        const stripes = Math.floor(width / 0.82)
+        return (
+          <group key={`${x},${z}`} position={[x, 0.022, z]} rotation={[0, rot, 0]}>
+            {Array.from({ length: stripes }, (_, i) => (
+              <Box key={i} s={[0.48, 0.014, 2.3]} p={[(i - (stripes - 1) / 2) * 0.82, 0, 0]} c={C.WALL_WHITE} grade={false} shadow={false} />
+            ))}
+          </group>
+        )
+      })}
     </>
   )
-}
-
-/** Patched asphalt — every Bengaluru road has a few. */
-function Patches() {
-  const m = mat('#3E3F46', { rough: 0.95, grade: false })
-  return (
-    <>
-      {[
-        [2.2, 16, 1.8, 1.2, 0.3],
-        [-1.8, -21, 2.4, 1.4, -0.2],
-        [17, -1.6, 1.5, 2.0, 0.1],
-        [-23, 2.1, 2.0, 1.1, 0.4],
-      ].map(([x, z, w, l, r], i) => (
-        <mesh key={i} geometry={plane(w, l)} material={m} position={[x, 0.006, z]} rotation={[-Math.PI / 2, 0, r]} receiveShadow />
-      ))}
-    </>
-  )
-}
-
-export function Ground() {
-  const road = texMat('asphalt', () => repeated(asphaltTex(), (EXTENT * 2) / 10, (EXTENT * 2) / 10), { rough: 0.92, vary: true })
-  const slabSize = EXTENT - ROAD
-  const walk = texMat('pavers', () => repeated(paverTex(), slabSize, slabSize), { rough: 0.9 })
-  const c = ROAD + slabSize / 2
-  return (
-    <>
-      <mesh geometry={plane(1400, 1400)} material={mat('#B9AD8A', { grade: false })} position={[0, -0.05, 0]} rotation={[-Math.PI / 2, 0, 0]} />
-      <mesh geometry={plane(EXTENT * 2, EXTENT * 2)} material={road} rotation={[-Math.PI / 2, 0, 0]} receiveShadow />
-      {[
-        [1, 1],
-        [1, -1],
-        [-1, 1],
-        [-1, -1],
-      ].map(([sx, sz]) => (
-        <mesh
-          key={`${sx}${sz}`}
-          geometry={rbox(slabSize, BASE, slabSize, 0.03)}
-          material={walk}
-          position={[sx * c, BASE / 2, sz * c]}
-          receiveShadow
-        />
-      ))}
-      <RoadMarkings />
-      <Patches />
-    </>
-  )
-}
-
-/** Black-and-yellow painted kerbs — instanced, kept out of the static merge. */
-export function Kerbs() {
-  const ref = useRef<THREE.InstancedMesh>(null!)
-  const segs = Math.floor(EXTENT - ROAD)
-  const count = segs * 8
-  const material = useMemo(() => new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.75 }), [])
-  useLayoutEffect(() => {
-    const m = new THREE.Matrix4()
-    const yellow = new THREE.Color(C.KERB_YELLOW)
-    const black = new THREE.Color(C.KERB_BLACK)
-    let i = 0
-    for (const sx of [1, -1])
-      for (const sz of [1, -1])
-        for (let k = 0; k < segs; k++) {
-          const along = ROAD + 0.5 + k
-          const col = k % 2 ? black : yellow
-          m.setPosition(sx * along, 0.12, sz * (ROAD - 0.13))
-          ref.current.setMatrixAt(i, m)
-          ref.current.setColorAt(i++, col)
-          m.makeRotationY(Math.PI / 2).setPosition(sx * (ROAD - 0.13), 0.12, sz * along)
-          ref.current.setMatrixAt(i, m)
-          ref.current.setColorAt(i++, col)
-          m.identity()
-        }
-    ref.current.instanceMatrix.needsUpdate = true
-    if (ref.current.instanceColor) ref.current.instanceColor.needsUpdate = true
-  }, [segs])
-  return <instancedMesh ref={ref} args={[rbox(0.96, 0.24, 0.26), material, count]} castShadow receiveShadow />
 }

@@ -1,4 +1,7 @@
 import { create } from 'zustand'
+import { CODE_LEN, CODE_PREFIX, normCode } from '@/lib/inviteCode'
+
+export { CODE_PREFIX } from '@/lib/inviteCode'
 import { supabase } from '@/lib/supabase'
 import { getPeople, useDirectory } from './people/directory'
 import { redeemInvite, sendApplication, sendEmailCode, submitApplication, useOnboarding } from './onboarding'
@@ -48,32 +51,20 @@ export type Result = 'inbox' | 'confirm' | 'saved' | 'review' | 'rejected' | 'ap
 export type CodeState = 'idle' | 'checking' | 'ok' | 'invalid' | 'used' | 'expired' | 'own' | 'error'
 export type Inviter = { name: string; role: string }
 
-export const CODE_PREFIX = 'BLR-'
-export const CODE_LEN = 6
-
 /** Test codes for ?gatepreview. */
 export const MOCK_CODES: Record<string, Exclude<CodeState, 'idle' | 'checking' | 'error'>> = {
-  'BLR-4K7Q9M': 'ok',
-  'BLR-USED42': 'used',
-  'BLR-OLD123': 'expired',
-  'BLR-MINE77': 'own',
+  'BBS-4K7Q9M': 'ok',
+  'BBS-USED42': 'used',
+  'BBS-OLD123': 'expired',
+  'BBS-MINE77': 'own',
 }
 
 export const CODE_ERRORS: Partial<Record<CodeState, string>> = {
-  invalid: 'That code doesn’t exist. Check for typos — codes look like BLR-4K7Q9M.',
+  invalid: 'That code doesn’t exist. Check for typos — codes look like BBS-4K7Q9M.',
   used: 'Someone has already used this code. Ask your inviter for a fresh one.',
   expired: 'This invite expired (they last 30 days once sent). Ask for a new one.',
   own: 'That’s one of your own codes — share it with someone you’d vouch for.',
   error: 'Couldn’t check the code right now. Check your connection and try again.',
-}
-
-/** Uppercase, strip spaces, accept a pasted invite link, and keep the BLR- prefix. */
-export function normCode(raw: string) {
-  const fromLink = raw.match(/[?&]invite=([A-Za-z0-9-]+)/)?.[1]
-  let c = (fromLink ?? raw).toUpperCase().replace(/[^A-Z0-9-]/g, '')
-  if (c.startsWith('BLR')) c = c.slice(3)
-  c = c.replace(/-/g, '').slice(0, CODE_LEN)
-  return CODE_PREFIX + c
 }
 
 type Access = {
@@ -155,20 +146,22 @@ export const useAccess = create<Access>((set, get) => ({
 
   choose: (path) => set(path === 'invite' ? { path, stage: 'code', codeState: 'idle' } : { path, stage: 'steps' }),
   setStage: (stage) => set(stage === 'signin' ? { stage, signin: 'idle' } : { stage }),
-  setCode: (c) => set({ code: normCode(c), codeState: 'idle' }),
+  setCode: (code) => set({ code, codeState: 'idle', inviter: null }),
 
   // exists / unused / not expired / not yours — checked on the server, nothing is used up
   checkCode: async () => {
-    const code = get().code
+    const code = normCode(get().code)
     if (code.length < CODE_PREFIX.length + CODE_LEN) return set({ codeState: 'invalid' })
-    set({ codeState: 'checking' })
+    set({ code, codeState: 'checking' })
+    const stillChecking = () => get().code === code && get().codeState === 'checking'
     if (GATE_MOCK || !supabase) {
       await new Promise((r) => setTimeout(r, 650))
+      if (!stillChecking()) return
       const state = GATE_MOCK ? (MOCK_CODES[code] ?? 'invalid') : 'error'
       return set({ codeState: state, inviter: state === 'ok' ? previewInviter() : null })
     }
     const { data, error } = await supabase.rpc('check_invite', { p_code: code })
-    if (get().code !== code) return // retyped while checking
+    if (!stillChecking()) return
     if (error) return set({ codeState: 'error', inviter: null })
     const r = data as { state: CodeState; inviter_name?: string; inviter_role?: string }
     set({
@@ -340,7 +333,7 @@ if (typeof window !== 'undefined' && supabase && !GATE_MOCK) {
     })
 }
 
-// Invite links: ?invite=BLR-4K7Q9M · Preview states: ?gatepreview&access=applied|review|rejected|approved
+// Invite links: ?invite=BBS-4K7Q9M · Preview states: ?gatepreview&access=applied|review|rejected|approved
 if (params) {
   const inv = params.get('invite')
   if (inv) useAccess.setState({ linkCode: normCode(inv) })

@@ -101,7 +101,7 @@ export function glassMat() {
 // and lamp reads it.
 export const lights = { value: 0 }
 
-/** Lit rooms behind the glass: warm bulbs, or the white tube lights half of Bengaluru still uses. */
+/** Lit rooms behind the glass: warm bulbs, or the white tube lights used in shops and homes. */
 export type Room = 'warm' | 'tube'
 const ROOM: Record<Room, THREE.Color> = {
   warm: new THREE.Color('#FFC27A').multiplyScalar(1.15),

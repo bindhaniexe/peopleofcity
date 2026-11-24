@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { bengaluruHour, clockText, KEYS, lightsOn, lookAt, parseTime, phaseAt } from './daylight'
+import { cityHour, clockText, KEYS, lightsOn, lookAt, parseTime, phaseAt } from './daylight'
 
 describe('the clock', () => {
-  it('runs on Bengaluru time wherever you are', () => {
+  it('runs on Bhubaneswar time wherever you are', () => {
     // 05:10 UTC = 10:40 IST
-    expect(clockText(bengaluruHour(Date.UTC(2026, 9, 11, 5, 10)))).toBe('10:40 AM')
+    expect(clockText(cityHour(Date.UTC(2026, 9, 11, 5, 10)))).toBe('10:40 AM')
     // 20:00 UTC = 01:30 IST the next day
-    expect(clockText(bengaluruHour(Date.UTC(2026, 9, 11, 20, 0)))).toBe('1:30 AM')
+    expect(clockText(cityHour(Date.UTC(2026, 9, 11, 20, 0)))).toBe('1:30 AM')
   })
 
   it('reads like a clock', () => {

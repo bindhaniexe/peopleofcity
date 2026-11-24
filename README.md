@@ -11,9 +11,8 @@ An open foundation for building interactive virtual cities where people can disc
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Built with Three.js](https://img.shields.io/badge/built%20with-three.js-black.svg)](https://threejs.org)
 
-**Live:** [People of Bengaluru](https://peopleofbengaluru.com) · [People of SF](https://peopleofsf.com)
+**People of Bhubaneswar** brings the People of City engine to Saheed Nagar and Patia in Odisha.
 
-![Walking down a street in Koramangala, Bengaluru: residents' name plates float over their heads](docs/screenshot.jpg)
 
 </div>
 
@@ -32,7 +31,7 @@ This repository is the foundation: the city engine, the people, and the social l
 </tr>
 </table>
 
-<sub>All screenshots are from this repository running locally with no configuration.</sub>
+<sub>These screenshots show the upstream People of City foundation.</sub>
 
 ---
 
@@ -67,8 +66,8 @@ Your town, your campus, your neighbourhood: creators are welcome to experiment w
 Everything here exists in this codebase today.
 
 **The city** (runs with no backend at all)
-- **A stylised 3D neighbourhood you can walk through.** Koramangala 5th Block, built in code from a hand-arranged kit of bevelled pieces: buildings, a darshini, a shop row, a park, a bus stop, trees, poles and street life (`src/game/world/`).
-- **A second district through a portal:** HSR Layout (`src/game/districts/hsr/`), with a travel transition between them.
+- **Saheed Nagar.** Walk Janpath from Rupali Square into shopping lanes and the forecourt of BMC Bhawani Mall.
+- **Patia.** Travel through the portal to KIIT Square, walk the campus and storefronts, then follow Nandankanan Road to the Infocity turn.
 - **Day and night on the city's real clock.** The sky, sun, street lights and night windows follow the local time (`src/game/scene/`).
 - **Cinematic look:** post-processing with ambient occlusion, bloom, filmic tone mapping and a vignette, scaled down on phones.
 - **Sound:** generative music and ambience, synthesised live in the browser, plus UI sounds (`src/game/audio/`).
@@ -187,14 +186,14 @@ The app is a standard Next.js app and deploys to [Vercel](https://vercel.com) or
 This is what the foundation is for. The short version:
 
 1. **Name it.** Change the site's name, title, description and address in `src/lib/site.ts`, and the city name in the HUD (`src/game/hud/HUD.tsx`) and the web app manifest (`src/app/manifest.ts`).
-2. **Set the clock.** The day/night cycle follows Bengaluru time. Change the offset in `bengaluruHour()` in `src/game/scene/daylight.ts`.
+2. **Set the clock.** The day and night cycle uses Indian Standard Time. The clock and lighting presets live in `src/game/scene/daylight.ts`.
 3. **Draw your districts.** Each district lives in `src/game/districts/`, and the list of districts with their names and colours is in `src/game/districts/registry.ts`.
 4. **Build your streets.** Buildings are assembled from the kit in `src/game/world/kit.tsx` (walls, windows, balconies, signs, awnings and more) and placed in `src/game/layout.ts`.
 5. **Paint it.** The whole city's colours are one palette in `src/lib/palette.ts`.
 6. **Dress your people.** Character styles are in `src/game/characters/roster.ts`, and the models are GLB files in `public/models/characters/`.
 7. **Bring your people in.** Replace the sample residents in `src/game/people/profiles.ts`, or connect Supabase for real profiles.
 
-Much of the city identity is **hardcoded today**, not configurable: Bengaluru appears in about 35 places in `src/`, from Kannada street names to the clock. [CUSTOMIZATION.md](CUSTOMIZATION.md) walks through every customisation point with real file paths, and proposes a single city config file as a future improvement.
+[CUSTOMIZATION.md](CUSTOMIZATION.md) documents the city’s district layouts, Odia signs, avatar styles, and deployment settings.
 
 ---
 

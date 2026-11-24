@@ -13,7 +13,7 @@ import { lightsOn } from './daylight'
 
 const SHADOWS = flag('shadows') // diagnostics: 'off' | 'static'
 
-// Bengaluru light on the city's real clock (design.md §7.1, §7.3): a warm key sun (the moon at night),
+// Bhubaneswar light on the city's real clock (design.md §7.1, §7.3): a warm key sun (the moon at night),
 // sky fill, ground bounce and a cool rim from behind. The looks themselves are in daylight.ts.
 /** Where the light comes from right now (mutated in place as the hour moves; the sky reads it too). */
 export const SUN_DIR = new THREE.Vector3(...daylight.look.sunDir).normalize()

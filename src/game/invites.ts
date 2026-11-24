@@ -34,9 +34,9 @@ export const inviteLink = (code: string) => `${window.location.origin}/?invite=$
 
 const day = 86_400_000
 const mockSlots = (): Slot[] => [
-  { code: 'BLR-7HQ2KD', state: 'available', note: null, sent_at: null, expires_at: null, renewed_from: 'Rohan', joined: null },
+  { code: 'BBS-7HQ2KD', state: 'available', note: null, sent_at: null, expires_at: null, renewed_from: 'Rohan', joined: null },
   {
-    code: 'BLR-M4XP9T',
+    code: 'BBS-M4XP9T',
     state: 'sent',
     note: 'Priya',
     sent_at: new Date(Date.now() - 3 * day).toISOString(),
@@ -45,7 +45,7 @@ const mockSlots = (): Slot[] => [
     joined: null,
   },
   {
-    code: 'BLR-Q8RN3C',
+    code: 'BBS-Q8RN3C',
     state: 'used',
     note: 'Arjun',
     sent_at: new Date(Date.now() - 12 * day).toISOString(),

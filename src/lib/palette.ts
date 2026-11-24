@@ -32,7 +32,7 @@ export const C = {
 
   AUTO_GREEN: '#2E8B4E',
   AUTO_YELLOW: '#F2C230',
-  BMTC_BLUE: '#2E6FB7',
+  TRANSIT_BLUE: '#2E6FB7',
 
   // Supporting tones, derived from the palette above
   GLASS: '#45678A',

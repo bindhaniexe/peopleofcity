@@ -1,12 +1,13 @@
 import { ImageResponse } from 'next/og'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { CITY_TITLE, SITE_NAME } from '@/lib/site'
 
 // The share card (Open Graph + X): the game's title card, design.md §10 — ink, saffron, Barlow Condensed
 // 800 italic caps. Built once at build time. A real in-game screenshot can replace it later:
 // drop an opengraph-image.png here and delete this file.
 
-export const alt = 'People of Bengaluru: walk the city, meet its designers and builders'
+export const alt = `${SITE_NAME} — walk Saheed Nagar and Patia`
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
@@ -47,14 +48,14 @@ export default async function Image() {
             PEOPLE OF
           </div>
         </div>
-        <div style={{ display: 'flex', marginTop: 8, fontSize: 210, fontWeight: 800, fontStyle: 'italic', lineHeight: 0.9, textShadow: '0 10px 0 #0C0E16' }}>
-          BENGALURU
+        <div style={{ display: 'flex', marginTop: 8, fontSize: 169, fontWeight: 800, fontStyle: 'italic', lineHeight: 0.9, textShadow: '0 10px 0 #0C0E16' }}>
+          {CITY_TITLE}
         </div>
         <div style={{ display: 'flex', marginTop: 26, fontSize: 44, fontWeight: 600, color: 'rgba(255, 246, 229, 0.82)' }}>
-          Walk the city. Meet the designers and builders who live in it.
+          Walk Saheed Nagar and Patia. Meet the people building the city.
         </div>
         <div style={{ display: 'flex', marginTop: 34, fontSize: 30, fontWeight: 600, letterSpacing: 4, color: '#3DDC84' }}>
-          PEOPLEOFBENGALURU.COM
+          ODISHA · INDIA
         </div>
       </div>
     ),

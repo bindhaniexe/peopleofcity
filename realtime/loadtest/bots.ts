@@ -17,7 +17,7 @@ const arg = (k: string, d: string) => {
 const base = arg('url', 'http://localhost:8787').replace(/\/$/, '')
 const n = Number(arg('n', '20'))
 const secret = arg('secret', '')
-const room = arg('room', 'koramangala#1')
+const room = arg('room', 'saheed-nagar#1')
 const seconds = Number(arg('seconds', '60'))
 const origin = arg('origin', 'http://localhost:3000')
 const spread = Number(arg('spread', '30')) // bots walk inside ±spread m, so most are within each other's radius

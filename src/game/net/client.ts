@@ -129,7 +129,8 @@ async function connect() {
     const t = await token()
     if (my !== gen) return
     if (!t) throw new Error('signed out')
-    const track = useGame.getState().trackId
+    const game = useGame.getState()
+    const track = game.travel?.findId ?? game.trackId
     const q = new URLSearchParams({ d: district })
     if (track && /^[0-9a-f-]{36}$/i.test(track)) q.set('with', track)
     const res = await fetch(`${BASE}/assign?${q}`, { headers: { Authorization: `Bearer ${t}` } })

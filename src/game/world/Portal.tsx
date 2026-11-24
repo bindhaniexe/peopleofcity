@@ -169,12 +169,12 @@ export function Portal({ pose }: { pose: Pose }) {
 
       <pointLight ref={light} position={[0, RING_Y, 0.6]} color="#FFB45A" intensity={9} distance={11} decay={2} />
 
-      {/* hand-painted sign (Kannada + English), like the street signs */}
+      {/* hand-painted sign (Odia + English), like the street signs */}
       <Sign
         p={[0, RING_Y + RING_R + 0.95, 0]}
         w={3.6}
         h={0.95}
-        spec={{ title: 'TRAVEL', kn: 'ಪ್ರಯಾಣ', sub: 'HSR · BELLANDUR · WHITEFIELD · DOMLUR · KORAMANGALA', bg: '#2B2F45', fg: '#FFB020' }}
+        spec={{ title: 'TRAVEL', odia: 'ଯାତ୍ରା', sub: 'SAHEED NAGAR · PATIA', bg: '#2B2F45', fg: '#FFB020' }}
         frame={C.WALL_WHITE}
       />
     </group>

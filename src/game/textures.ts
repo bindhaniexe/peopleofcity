@@ -200,6 +200,23 @@ export function shutterTex() {
 }
 
 /** Simplified window grid for distant blocks — one tile is 2 bays x 2 floors. */
+let ikat: THREE.CanvasTexture | undefined
+export function ikatTexture() {
+  if (ikat) return ikat
+  const [cloth, ctx] = canvas(64, 64)
+  ctx.fillStyle = '#9E502F'
+  ctx.fillRect(0, 0, 64, 64)
+  for (const y of [10, 32, 54]) {
+    for (let row = -6; row <= 6; row += 2) {
+      const half = 7 - Math.abs(row)
+      ctx.fillStyle = row === 0 ? '#204D4B' : '#D9B691'
+      for (const x of [8, 24, 40, 56]) ctx.fillRect(x - half, y + row, half * 2, 2)
+    }
+  }
+  ikat = toTex(cloth)
+  return ikat
+}
+
 export function farFacadeTex(wall: string) {
   return once(`far|${wall}`, () => {
     const [c, ctx] = canvas(128, 128)
@@ -224,10 +241,10 @@ export function farFacadeTex(wall: string) {
 }
 
 // ---------------------------------------------------------------------------
-// Signboards (Kannada + English, hand-painted)
+// Signboards (Odia + English, hand-painted)
 // ---------------------------------------------------------------------------
 
-export type SignSpec = { title: string; kn?: string; sub?: string; bg: string; fg: string }
+export type SignSpec = { title: string; odia?: string; sub?: string; bg: string; fg: string }
 
 export function fontVar(name: string) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || 'sans-serif'
@@ -242,7 +259,7 @@ export function useFontsReady() {
   fontPromise ??= Promise.all([
     document.fonts.load(`italic 800 64px ${fontVar('--font-display')}`, 'ABC'),
     document.fonts.load(`600 64px ${fontVar('--font-body')}`, 'ABC'),
-    document.fonts.load(`700 64px ${fontVar('--font-kannada')}`, 'ನಮ್ಮ'),
+    document.fonts.load(`700 64px ${fontVar('--font-odia')}`, 'ଭୁବନେଶ୍ୱର ଶହୀଦ ନଗର ପଟିଆ'),
   ]).then(
     () => {
       fontsReady = true
@@ -264,7 +281,7 @@ export function signTexture(spec: SignSpec, w: number, h: number) {
   const [c, ctx] = canvas(W, H)
   const display = fontVar('--font-display')
   const body = fontVar('--font-body')
-  const kn = fontVar('--font-kannada')
+  const odia = fontVar('--font-odia')
 
   ctx.fillStyle = spec.bg
   ctx.fillRect(0, 0, W, H)
@@ -283,8 +300,8 @@ export function signTexture(spec: SignSpec, w: number, h: number) {
 
   type Line = { text: string; font: (s: number) => string; size: number }
   const lines: Line[] = []
-  if (spec.kn) lines.push({ text: spec.kn, font: (s) => `700 ${s}px ${kn}`, size: 0.25 })
-  lines.push({ text: spec.title, font: (s) => `italic 800 ${s}px ${display}`, size: spec.kn || spec.sub ? 0.36 : 0.56 })
+  if (spec.odia) lines.push({ text: spec.odia, font: (s) => `700 ${s}px ${odia}`, size: 0.25 })
+  lines.push({ text: spec.title, font: (s) => `italic 800 ${s}px ${display}`, size: spec.odia || spec.sub ? 0.36 : 0.56 })
   if (spec.sub) lines.push({ text: spec.sub, font: (s) => `600 ${s}px ${body}`, size: 0.13 })
   const gap = 0.05
   const total = lines.reduce((a, l) => a + l.size, 0) + gap * (lines.length - 1)

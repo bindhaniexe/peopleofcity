@@ -1,6 +1,6 @@
 # Architecture
 
-How People of City is put together, for developers new to the project. Every path is from this repository.
+How People of Bhubaneswar is put together, for developers new to the project. Every path is from this repository.
 
 ```
 ┌──────────────────────────── Browser ────────────────────────────┐
@@ -73,7 +73,7 @@ public/audio/             sound files (see CREDITS.md)
 ## Rendering and the 3D environment
 
 - **The root.** `src/game/Game.tsx` mounts one React Three Fiber `<Canvas>` with the sky (`scene/Sky.tsx`), lighting (`scene/Lighting.tsx`), the current district (`world/DistrictWorld.tsx`), the player, the people, the audio director and post-processing (`scene/Effects.tsx`). The HUD is ordinary React DOM layered over the canvas.
-- **Built in code.** Buildings are not 3D files. They're assembled from a kit of bevelled pieces in `world/kit.tsx` (`Box`, `Win`, `Balcony`, `Sign`, `Awning`, …). Placement data lives in `game/layout.ts` (Koramangala) and `districts/hsr/layout.ts` (HSR).
+- **Built in code.** Buildings are not 3D files. They're assembled from a kit of bevelled pieces in `world/kit.tsx` (`Box`, `Win`, `Balcony`, `Sign`, `Awning`, …). Placement data lives in the `layout.ts` files under `districts/saheed-nagar/` and `districts/patia/`. The shared block layout derives ground surfaces and colliders from it.
 - **Draw-call merging.** Thousands of kit pieces would be thousands of draw calls. `world/StaticMerge.tsx` bakes every static mesh into one merged mesh per material per chunk of the map once it mounts.
 - **Light and time.** `scene/time.ts` keeps the city's clock (the real local time, or `?time=HH:MM`). `scene/daylight.ts` turns the hour into a look (sun, sky, fog, window lights), which the lights and materials read every frame.
 - **Post-processing.** Ambient occlusion (N8AO), bloom, ACES filmic tone mapping, SMAA and a vignette, scaled by a quality level per device (`game/device.ts`). Phones get a lighter profile.
@@ -81,7 +81,7 @@ public/audio/             sound files (see CREDITS.md)
 
 ## Districts
 
-A district is a `DistrictDef` (`districts/active.ts`): its colliders, ground height, walking surfaces (`asphalt`, `pavers`, `grass`, `kota`), landmarks, spawn point, portal, hangout spots and trees. Each district registers itself with `registerDistrict(…)`, and `districts/index.ts` loads them and picks the default. `districts/registry.ts` lists all districts with their names and colours, including unbuilt ones that show as "coming soon". Walking into a portal opens `hud/PortalPicker.tsx`, and `hud/Travel.tsx` plays the transition.
+A district is a `DistrictDef` (`districts/active.ts`): its colliders, ground height, walking surfaces (`asphalt`, `pavers`, `grass`, `kota`), landmarks, spawn point, portal, hangout spots and trees. Each district registers itself with `registerDistrict(…)`, and `districts/index.ts` loads them and picks the default. `districts/registry.ts` lists all districts with their names and colours, including Old Town and Unit II, which show as coming soon. Walking into a portal opens `hud/PortalPicker.tsx`, and `hud/Travel.tsx` plays the transition.
 
 ## The avatar system
 

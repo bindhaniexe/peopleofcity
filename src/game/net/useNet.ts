@@ -8,7 +8,7 @@ export type NetStatus = 'off' | 'connecting' | 'live' | 'down' | 'replaced' | 'a
 
 type Net = {
   status: NetStatus
-  /** the shard you're in, e.g. "koramangala#1" */
+  /** the shard you're in, e.g. "saheed-nagar#1" */
   room: string | null
   /** members in your shard right now */
   hereNow: number

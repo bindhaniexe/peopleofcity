@@ -2,7 +2,7 @@ import { openApplicationOf } from '@/lib/server/applications'
 import { admin, json, userFrom } from '@/lib/server/supabaseAdmin'
 
 // FILLER (People of City). Applications are free in the open base (src/lib/apply.ts APPLICATIONS_FREE): the saved
-// application goes straight to a reviewer. People of Bengaluru's paid checkout isn't part of it; plug in your payment
+// application goes straight to a reviewer. Paid checkout is optional; plug in your payment
 // provider here if you want an application fee.
 
 export async function POST(req: Request) {

@@ -5,7 +5,7 @@ import { useMemo } from 'react'
 import { C } from '@/lib/palette'
 import { canopyGeo, cyl } from '../geometry'
 import { leafMat, mat } from '../materials'
-import { BASE, TREES } from '../layout'
+import { BASE, type TreeSpec } from '../layout'
 import { rng } from '../textures'
 import { Cyl, type V3 } from './kit'
 
@@ -63,7 +63,7 @@ function Branches({ seed, n, y, len, rad, tilt }: { seed: number; n: number; y: 
   )
 }
 
-/** Rain tree — the great umbrella canopy that shades Bengaluru's streets. */
+/** Rain tree — the great umbrella canopy that shades the city’s streets. */
 export function RainTree({ p, s = 1, seed, detail = 4 }: { p: V3; s?: number; seed: number; detail?: number }) {
   const geo = useMemo(
     () => canopyGeo(rainBlobs(seed), { seed, deep: C.LEAF_DEEP, mid: C.LEAF_MID, light: C.LEAF_LIGHT, detail }),
@@ -114,10 +114,10 @@ export function Bush({ p, s = 1, seed, flower }: { p: V3; s?: number; seed: numb
   return <mesh geometry={geo} material={leafMat()} position={p} scale={s} castShadow receiveShadow />
 }
 
-export function StreetTrees() {
+export function StreetTrees({ trees }: { trees: TreeSpec[] }) {
   return (
     <>
-      {TREES.map((t) =>
+      {trees.map((t) =>
         t.kind === 'rain' ? (
           <RainTree key={t.seed} p={[t.x, BASE, t.z]} s={t.s} seed={t.seed} />
         ) : (

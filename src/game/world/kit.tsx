@@ -246,13 +246,13 @@ export function Parapet({ w, d, wall, trim = C.WALL_WHITE, y }: { w: number; d: 
 
 type SignProps = { p: V3; r?: V3; w: number; h: number; spec: SignSpec; frame?: string; depth?: number }
 
-/** Hand-painted signboard: Kannada + English. */
+/** Hand-painted signboard: Odia + English. */
 export function Sign({ p, r, w, h, spec, frame = C.GRILLE, depth = 0.12 }: SignProps) {
   useFontsReady()
   const material = useMemo(
     () => new THREE.MeshStandardMaterial({ map: signTexture(spec, w, h), roughness: 0.72 }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [spec.title, spec.kn, spec.sub, spec.bg, spec.fg, w, h],
+    [spec.title, spec.odia, spec.sub, spec.bg, spec.fg, w, h],
   )
   return (
     <group position={p} rotation={r}>
@@ -314,7 +314,7 @@ export function ACUnit({ p, r }: { p: V3; r?: V3 }) {
   )
 }
 
-const CLOTH = [C.FLAME, C.BMTC_BLUE, C.KERB_YELLOW, C.WALL_PINK, C.AUTO_GREEN, C.WALL_WHITE, C.BOUGAIN, C.WALL_POWDER]
+const CLOTH = [C.FLAME, C.TRANSIT_BLUE, C.KERB_YELLOW, C.WALL_PINK, C.AUTO_GREEN, C.WALL_WHITE, C.BOUGAIN, C.WALL_POWDER]
 
 /** Rooftop clothes line — sarees, shirts and towels drying in the sun. */
 export function ClothesLine({ p, len, yaw = 0, seed }: { p: V3; len: number; yaw?: number; seed: number }) {

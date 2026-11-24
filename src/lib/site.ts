@@ -1,36 +1,45 @@
-// The public face of the site: its address, name and what search engines may do with it.
-// Server-side only where it matters (VERCEL_ENV isn't sent to the browser).
 
-/** The one address search engines should know. Every other host (dev, previews, *.vercel.app) is noindex. */
-export const SITE_URL = 'https://peopleofbengaluru.com'
+export const CITY_NAME = 'Bhubaneswar'
+export const CITY_TITLE = CITY_NAME.toUpperCase()
+export const SITE_NAME = `People of ${CITY_NAME}`
+export const SITE_TITLE = `${SITE_NAME} — walk Saheed Nagar and Patia`
+export const SITE_DESCRIPTION =
+  'Walk through a stylised 3D Bhubaneswar. Explore Janpath in Saheed Nagar and KIIT Road in Patia, and meet local designers, makers and students.'
 
-/** The review queue lives on its own subdomain (src/proxy.ts): production, dev (staging data), and local (admin.localhost). */
-export const ADMIN_HOSTS = ['admin.peopleofbengaluru.com', 'dev.admin.peopleofbengaluru.com', 'admin.localhost']
-
-/** The game this page belongs to (browser only): admin.x → x, dev.admin.x → dev.x (same scheme and port), else this origin. */
-export function gameOrigin() {
-  const { hostname: h, protocol, port } = window.location
-  if (!ADMIN_HOSTS.includes(h)) return window.location.origin
-  return `${protocol}//${h.replace(/^(dev\.)?admin\./, '$1')}${port ? `:${port}` : ''}`
+function origin(value: string | undefined) {
+  if (!value) return undefined
+  try {
+    const url = new URL(value)
+    return url.protocol === 'https:' || url.protocol === 'http:' ? url.origin : undefined
+  } catch {
+    return undefined
+  }
 }
 
-/** The public sites' hosts, where /admin doesn't exist. */
-export const PUBLIC_HOSTS = ['peopleofbengaluru.com', 'www.peopleofbengaluru.com', 'dev.peopleofbengaluru.com']
+const configuredSite = origin(process.env.NEXT_PUBLIC_SITE_URL)
+export const SITE_URL = configuredSite ?? 'http://localhost:3000'
+export const STAGING_SITE_URL = origin(process.env.NEXT_PUBLIC_STAGING_SITE_URL)
 
-export const SITE_NAME = 'People of Bengaluru'
+const productionAdmin = configuredSite && origin(process.env.NEXT_PUBLIC_ADMIN_URL)
+const stagingAdmin = STAGING_SITE_URL && origin(process.env.NEXT_PUBLIC_STAGING_ADMIN_URL)
+export const ADMIN_GAME_ORIGINS = new Map<string, string>([
+  ...(productionAdmin ? [[productionAdmin, SITE_URL] as const] : []),
+  ...(stagingAdmin && STAGING_SITE_URL ? [[stagingAdmin, STAGING_SITE_URL] as const] : []),
+  ['http://admin.localhost:3000', 'http://localhost:3000'],
+])
+export const ADMIN_HOSTS = Array.from(ADMIN_GAME_ORIGINS.keys(), (url) => new URL(url).hostname)
+export const PUBLIC_HOSTS = [configuredSite, STAGING_SITE_URL].flatMap((url) => {
+  if (!url) return []
+  const { hostname } = new URL(url)
+  return hostname.startsWith('www.') ? [hostname, hostname.slice(4)] : [hostname, `www.${hostname}`]
+})
 
-export const SITE_TITLE = 'People of Bengaluru — walk the city, meet its designers and builders'
+export function gameOrigin() {
+  const { hostname, origin, protocol, port } = window.location
+  if (hostname === 'admin.localhost') return `${protocol}//localhost${port ? `:${port}` : ''}`
+  return ADMIN_GAME_ORIGINS.get(origin) ?? origin
+}
 
-export const SITE_DESCRIPTION =
-  'A stylised 3D Bengaluru you can walk through. Every character is a real designer or builder: find them in Koramangala and HSR Layout, see what they’re building, and say hi.'
-
-/** Google Analytics 4 measurement ID, e.g. 'G-XXXXXXXXXX'. Empty: no analytics. Loads only on production (see ANALYTICS_ON). */
 export const GA_ID = ''
-
-/**
- * True only on the Vercel production deployment (peopleofbengaluru.com). Dev, previews and local
- * are never indexed and never send analytics. Read at build time; Vercel sets VERCEL_ENV itself.
- */
-export const IS_PRODUCTION = process.env.VERCEL_ENV === 'production'
-
+export const IS_PRODUCTION = process.env.VERCEL_ENV === 'production' && !!configuredSite
 export const ANALYTICS_ON = IS_PRODUCTION && !!GA_ID

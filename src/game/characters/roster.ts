@@ -1,7 +1,7 @@
 import { C } from '@/lib/palette'
 
 // Playable character styles (CLAUDE.md Phase 2). One shared universe: same
-// proportions push, same palette discipline, Bengaluru skin tones.
+// proportions push, shared palette and a range of skin tones.
 //
 // Interim assets: CC0 "Ultimate Modular Men/Women" by Quaternius (poly.pizza)
 // and CC0 "RobotExpressive" — restyled here. See public/models/CREDITS.md.
@@ -19,6 +19,8 @@ export type CharacterDef = {
   /** Material name → colour. Unlisted materials keep a neutral restyle. */
   colors: Record<string, string>
   hide?: string[]
+  /** Woven accent on a backpack pocket. */
+  ikat?: boolean
   /** Materials to hide entirely. */
   invisible?: string[]
   /** Materials rendered as clear glass with a bright rim (the guest look). */
@@ -82,14 +84,15 @@ export const ROSTER: CharacterDef[] = [
     gender: 'f',
     alt: {
       file: '/models/characters/investor.glb',
-      colors: { Skin: SKIN.a, Suit: C.BMTC_BLUE, Black: '#2B2D33', White: CREAM, Tie: C.KERB_YELLOW, Hair: HAIR, Eyebrows: HAIR, Eye: '#1C1F2B' },
+      colors: { Skin: SKIN.a, Suit: C.TRANSIT_BLUE, Black: '#2B2D33', White: CREAM, Tie: C.KERB_YELLOW, Hair: HAIR, Eyebrows: HAIR, Eye: '#1C1F2B' },
     },
-    accent: C.BMTC_BLUE,
-    colors: { Skin: SKIN.d, Black: C.BMTC_BLUE, White: CREAM, Hair_Blond: HAIR, Hair_Brown: HAIR, Brown: '#2B2D33' },
+    accent: C.TRANSIT_BLUE,
+    colors: { Skin: SKIN.d, Black: C.TRANSIT_BLUE, White: CREAM, Hair_Blond: HAIR, Hair_Brown: HAIR, Brown: '#2B2D33' },
   },
   {
     id: 'maker',
     name: 'THE MAKER',
+    ikat: true,
     tagline: 'Builds in public.',
     file: '/models/characters/maker.glb',
     rig: 'modular',
@@ -138,9 +141,19 @@ export const ROSTER: CharacterDef[] = [
     colors: { Skin: SKIN.e, White: CREAM, Orange: C.TERRACOTTA, Grey: '#4A4D55', Hair_Blond: HAIR, Hair_Brown: HAIR, Brown: '#3B302A' },
   },
   {
+    id: 'textile',
+    name: 'THE TEXTILE ARTIST',
+    tagline: 'Always sketching a new pattern.',
+    file: '/models/characters/adventurer_f.glb',
+    rig: 'modular',
+    gender: 'f',
+    accent: '#A64F36',
+    colors: { Skin: SKIN.d, Green: '#A64F36', LightGreen: '#C27953', White: CREAM, Brown2: '#344D52', Brown_02: CREAM, Gold: '#C39861', Hair_Brown: HAIR, Brown: '#3B302A' },
+  },
+  {
     id: 'pm',
     name: 'THE PRODUCT LEAD',
-    tagline: 'Roadmaps & filter coffee.',
+    tagline: 'Roadmaps over a glass of cha.',
     file: '/models/characters/pm.glb',
     rig: 'modular',
     gender: 'm',

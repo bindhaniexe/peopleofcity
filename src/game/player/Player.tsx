@@ -133,9 +133,9 @@ export function Player() {
       s.pos.set(p.x, active.def.ground(p.x, p.z), p.z)
       s.vel.set(0, 0, 0)
       s.facing = p.face
+      look.yaw = p.face + Math.PI
+      look.pitch = 0.18
       if (!first) {
-        look.yaw = p.face + Math.PI
-        look.pitch = 0.18
         s.camPos.set(p.x - Math.sin(p.face) * 4.2, 2.2, p.z - Math.cos(p.face) * 4.2)
         s.lookAt.set(p.x, 1.5, p.z)
       }

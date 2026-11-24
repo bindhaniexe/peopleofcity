@@ -1,5 +1,7 @@
 'use client'
 
+import { SITE_NAME } from '@/lib/site'
+
 import { useEffect, useRef, useState } from 'react'
 import { inviteLink, useInvites, type Slot } from '../invites'
 import { useDirectory } from '../people/directory'
@@ -32,7 +34,7 @@ async function hand(s: Slot) {
   if (canShare()) {
     try {
       await navigator.share({
-        title: 'People of Bengaluru',
+        title: SITE_NAME,
         text: 'You’re invited to the city of designers and builders.',
         url,
       })

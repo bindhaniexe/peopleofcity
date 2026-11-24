@@ -4,10 +4,11 @@ import { useEffect } from 'react'
 import { useProgress } from '@react-three/drei'
 import { useGame } from '../store'
 import { useDirectory } from '../people/directory'
-import { districtInfo, homeDistrict } from '../districts/registry'
+import { DEFAULT_DISTRICT, districtInfo, homeDistrict } from '../districts/registry'
 import { requestLook } from '../player/input'
 import { useAccess } from '../access'
 import { useOnboarding } from '../onboarding'
+import { CITY_TITLE } from '@/lib/site'
 
 /** Title screen over a slow cinematic orbit of the block. */
 export function Intro() {
@@ -62,8 +63,8 @@ export function Intro() {
       ) : (
         <div className="intro-title">
           <div className="intro-kicker">PEOPLE OF</div>
-          <h1>BENGALURU</h1>
-          <p>Walk the city. Meet the people who design it.</p>
+          <h1>{CITY_TITLE}</h1>
+          <p>Walk the city. Meet the people building it.</p>
           {!me && <p className="intro-note">You’ll arrive invisible — become visible whenever you’re ready.</p>}
         </div>
       )}
@@ -80,7 +81,7 @@ export function Intro() {
             </>
           ) : (
             <button className="btn-primary slant" onClick={start} autoFocus>
-              <span className="unslant">{me ? `ENTER ${districtInfo(homeDistrict(me.location)).title} AS ${me.name.split(' ')[0].toUpperCase()} ▸` : 'ENTER KORAMANGALA ▸'}</span>
+              <span className="unslant">{me ? `ENTER ${districtInfo(homeDistrict(me.location)).title} AS ${me.name.split(' ')[0].toUpperCase()} ▸` : `ENTER ${districtInfo(DEFAULT_DISTRICT).title} ▸`}</span>
             </button>
           )
         ) : (

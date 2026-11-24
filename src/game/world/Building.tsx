@@ -7,10 +7,10 @@ import { rng } from '../textures'
 import { ACUnit, Balcony, Box, ClothesLine, Cyl, Dish, Door, Mumty, Parapet, Tank, Win } from './kit'
 
 const CURTAINS = [C.TERRACOTTA, C.WALL_BUTTER, '#E9E4DA', C.WALL_POWDER, '#D9846B']
-const CLOTHS = [C.FLAME, C.BMTC_BLUE, C.KERB_YELLOW, C.WALL_PINK, C.WALL_WHITE]
+const CLOTHS = [C.FLAME, C.TRANSIT_BLUE, C.KERB_YELLOW, C.WALL_PINK, C.WALL_WHITE]
 
 /**
- * A Bengaluru cement block: painted walls, white floor bands, chajja-shaded
+ * A painted concrete block: painted walls, white floor bands, chajja-shaded
  * windows, alternating balconies, parapet, water tanks and a stair-head room.
  * Local +Z is the street-facing front.
  */

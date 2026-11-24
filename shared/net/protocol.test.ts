@@ -80,9 +80,9 @@ describe('room → game', () => {
 
 describe('room names', () => {
   it('round-trips and refuses unknown districts', () => {
-    expect(parseRoom(roomName('hsr', 2))).toEqual({ district: 'hsr', shard: 2 })
+    expect(parseRoom(roomName('patia', 2))).toEqual({ district: 'patia', shard: 2 })
     expect(parseRoom('whitefield#1')).toBeNull()
-    expect(parseRoom('koramangala#0')).toBeNull()
-    expect(parseRoom('koramangala')).toBeNull()
+    expect(parseRoom('saheed-nagar#0')).toBeNull()
+    expect(parseRoom('saheed-nagar')).toBeNull()
   })
 })

@@ -1,5 +1,7 @@
 'use client'
 
+import { DISTRICTS } from '../districts/registry'
+
 import { useEffect } from 'react'
 import { MISSIONS, allDone, currentMission, type MissionId } from '../missions'
 import { PREVIEW, useMissions } from '../missionsStore'
@@ -126,7 +128,7 @@ export function Missions() {
                 </span>
                 {on && (
                   <span className="ms-hint">
-                    {m.id === 'cross' ? `Take the portal to ${district === 'hsr' ? 'Koramangala' : 'HSR Layout'}.` : m.hint}
+                    {m.id === 'cross' ? `Take the portal to ${DISTRICTS.find((candidate) => candidate.built && candidate.id !== district)?.name}.` : m.hint}
                   </span>
                 )}
               </span>

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { supabase, type ProfileRow } from '@/lib/supabase'
-import { PEOPLE as SAMPLES, type Profile } from './profiles'
+import { samplePeople, type Profile } from './profiles'
 import type { Status } from '../status'
 import { getDistrict } from '../districts/active'
 import { homeDistrict } from '../districts/registry'
@@ -53,7 +53,7 @@ function place(rows: ProfileRow[]) {
   for (const r of [...rows].sort((a, b) => a.created_at.localeCompare(b.created_at))) {
     // spots belong to the district the person appears in; unknown → that district's first spot
     const spots = getDistrict(homeDistrict(r.location)).spots
-    const id = r.spot in spots ? r.spot : Object.keys(spots)[0]
+    const id = Object.hasOwn(spots, r.spot) ? r.spot : Object.keys(spots)[0]
     const key = `${homeDistrict(r.location)}|${id}`
     bySpot.set(key, [...(bySpot.get(key) ?? []), r])
   }
@@ -77,7 +77,7 @@ let samplesVisible = true
 export function getPeople(): Profile[] {
   const { real } = useDirectory.getState()
   samplesVisible = real.length < RETIRE_SAMPLES_AT
-  return samplesVisible ? [...SAMPLES.map((p) => ({ ...p, sample: true })), ...real] : real
+  return samplesVisible ? [...samplePeople(), ...real] : real
 }
 
 export function usePeople(): Profile[] {

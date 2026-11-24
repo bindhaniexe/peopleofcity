@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { ADMIN_HOSTS, PUBLIC_HOSTS } from '@/lib/site'
 
-// The review queue at admin.peopleofbengaluru.com, dev.admin.peopleofbengaluru.com for staging, and
+// The review queue at the configured production and staging admin hosts, and
 // admin.localhost:3000 locally (browsers send *.localhost to this machine)
 // (CLAUDE.md "SEO + ANALYTICS" / 5E-B):
 // - on an admin host, / is the admin page and the API works as usual; everything else goes to /.

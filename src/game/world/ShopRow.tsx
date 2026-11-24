@@ -2,7 +2,8 @@
 
 import type { ReactElement } from 'react'
 import { C } from '@/lib/palette'
-import { BASE, FH, SHOPS, SHOP_Z, type ShopSpec } from '../layout'
+import { BASE, FH } from '../layout'
+import type { BlockShop } from '../districts/blocks'
 import { rng } from '../textures'
 import { Balcony, Box, Parapet, Shutter, Sign, Tank, Win } from './kit'
 
@@ -10,8 +11,8 @@ const G = 3.6
 const W = 6
 const D = 8
 
-/** One shophouse on 80 Feet Road: open shop below, home above. Local +Z faces the road. */
-export function ShopUnit({ x, floors, wall, sign, shutter, goods, balcony, seed, z = SHOP_Z }: ShopSpec & { z?: number }) {
+/** A shophouse with a street-level counter and balconies above. */
+export function ShopUnit({ x, floors, wall, sign, shutter, goods, balcony, seed, z, rot, upperSign }: BlockShop) {
   const H = G + (floors - 1) * FH
   const r = rng(seed)
   const front = D / 2
@@ -39,7 +40,7 @@ export function ShopUnit({ x, floors, wall, sign, shutter, goods, balcony, seed,
   }
 
   return (
-    <group position={[x, BASE, z]}>
+    <group position={[x, BASE, z]} rotation={[0, rot, 0]}>
       {/* ground: back block, piers, lintel, floor */}
       <Box s={[W, G, 5]} p={[0, G / 2, -1.5]} c={wall} />
       <Box s={[0.6, G, 3]} p={[-W / 2 + 0.3, G / 2, 2.5]} c={wall} />
@@ -77,17 +78,8 @@ export function ShopUnit({ x, floors, wall, sign, shutter, goods, balcony, seed,
       <Parapet w={W} d={D} wall={wall} y={H} />
       {floors > 2 && <Tank p={[1.4, H, -2]} />}
 
-      <Sign p={[0, 3.2, front + 0.2]} w={W - 0.5} h={1.15} spec={sign} />
+      {upperSign && <Sign p={[0, 3.2, front + 0.2]} w={W - 0.5} h={0.8} spec={{ title: 'ANUJ TIME SQUARE', bg: C.GRILLE, fg: C.WALL_WHITE }} />}
+      <Sign p={[0, upperSign ? H - 0.16 : 3.2, front + 0.24]} w={W - 0.5} h={1.15} spec={sign} />
     </group>
-  )
-}
-
-export function ShopRow() {
-  return (
-    <>
-      {SHOPS.map((s) => (
-        <ShopUnit key={s.x} {...s} />
-      ))}
-    </>
   )
 }

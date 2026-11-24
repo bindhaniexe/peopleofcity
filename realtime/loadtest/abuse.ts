@@ -20,7 +20,7 @@ const envName = arg('env', 'dev')
 const origin = arg('origin', 'http://localhost:3000')
 const SUPABASE = 'https://YOUR_PRODUCTION_PROJECT_REF.supabase.co'
 const REAL_KID = '1479e98d-e774-442b-9044-f7e8ebcb012b'
-const room = 'hsr#1'
+const room = 'patia#1'
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
 type Conn = { ws: WebSocket; msgs: ReturnType<typeof decodeServer>[]; closed: () => number | null }
@@ -88,7 +88,7 @@ for (let i = 0; i < 30 && silent.closed() === null; i++) await wait(500)
 check('refused: connects but never says hello (closed after 5 s)', closing && silent.closed() === CLOSE.HELLO_TIMEOUT)
 
 // --- who's online never reaches a non-member -------------------------------------------------------
-for (const path of ['/city', '/assign?d=koramangala']) {
+for (const path of ['/city', '/assign?d=saheed-nagar']) {
   const anon = await fetch(`${base}${path}`)
   const forged = await fetch(`${base}${path}`, { headers: { Authorization: `Bearer ${attackerSigned}` } })
   const body = await anon.text()

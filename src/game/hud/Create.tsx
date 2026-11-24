@@ -11,7 +11,7 @@ import {
   type Gender,
 } from "../characters/roster";
 import { useDirectory } from "../people/directory";
-import { CITY_MARK, DISTRICTS, districtOfLocation, placeKind, placeLabel, placeName, type PlaceKind } from "../districts/registry";
+import { CITY_MARK, DEFAULT_DISTRICT, DISTRICTS, districtInfo, districtOfLocation, placeKind, placeLabel, placeName, type PlaceKind } from "../districts/registry";
 import {
   ANSWER_MAX,
   STEP_TITLE,
@@ -26,7 +26,6 @@ import {
 } from "../onboarding";
 import {
   CODE_ERRORS,
-  CODE_PREFIX,
   GATE_MOCK,
   MOCK_CODES,
   useAccess,
@@ -113,7 +112,7 @@ function QuestionStep({ d, patch }: { d: Draft; patch: (p: Partial<Draft>) => vo
         label="YOUR ANSWER"
         value={d.appWhy}
         onChange={(appWhy) => patch({ appWhy })}
-        placeholder="I’ve been designing in Bengaluru for six years and…"
+        placeholder="I’ve been designing in Bhubaneswar for six years and…"
         max={ANSWER_MAX}
       />
       <span className="cr-q-private">ONLY THE REVIEWERS SEE THIS · NEVER SHOWN IN THE CITY</span>
@@ -402,9 +401,6 @@ function CodeScreen() {
           value={code}
           onChange={(e) => setCode(e.target.value)}
           onFocus={(e) => e.target.select()} // retyping a code replaces it
-          onKeyDown={(e) => {
-            if (e.key === "Backspace" && code === CODE_PREFIX) e.preventDefault();
-          }}
           spellCheck={false}
           autoCapitalize="characters"
           autoComplete="off"
@@ -483,13 +479,13 @@ function PayStep({ d }: { d: Draft }) {
 }
 
 const ELSEWHERE: { kind: Exclude<PlaceKind, "district">; title: string; placeholder: string; label: string }[] = [
-  { kind: "blr", title: "OTHER IN BENGALURU", placeholder: "Jayanagar, Indiranagar, Malleshwaram…", label: "WHICH AREA?" },
+  { kind: "local", title: "OTHER IN BHUBANESWAR", placeholder: "Nayapalli, Jayadev Vihar, Khandagiri…", label: "WHICH AREA?" },
   { kind: "city", title: "OTHER CITY", placeholder: "Pune, Mumbai, Delhi…", label: "WHICH CITY?" },
 ];
 
-/** Where do you hang out: one of the five districts, or somewhere else (an empty field to type it). */
+/** Where do you hang out: one of the listed districts, or somewhere else (an empty field to type it). */
 function HangoutStep({ d, patch }: { d: Draft; patch: (p: Partial<Draft>) => void }) {
-  // the chip you picked, not what the text spells: typing "Domlur" into OTHER keeps the field open
+  // the chip you picked, not what the text spells: typing "Nayapalli" into OTHER keeps the field open
   const [kind, setKind] = useState<PlaceKind>(() => placeKind(d.location));
   const typed = placeName(d.location);
   const pickDistrict = (name: string) => {
@@ -529,14 +525,14 @@ function HangoutStep({ d, patch }: { d: Draft; patch: (p: Partial<Draft>) => voi
       )}
       {district && !district.built && (
         <span className="cr-gender-note" style={{ margin: "8px 0 0" }}>
-          {district.title} isn’t built yet. You’ll be visiting Koramangala until it is.
+          {district.title} isn’t built yet. You’ll be visiting {districtInfo(DEFAULT_DISTRICT).name} until it is.
         </span>
       )}
       {other && (
         <span className="cr-gender-note" style={{ margin: "8px 0 0" }}>
           {kind === "city"
-            ? "You’ll be visiting Bengaluru: you’ll hang out in Koramangala."
-            : "Your area isn’t built yet. You’ll be visiting Koramangala until it is."}
+            ? `You’ll be visiting Bhubaneswar and hanging out in ${districtInfo(DEFAULT_DISTRICT).name}.`
+            : `Your area isn’t built yet. You’ll be visiting ${districtInfo(DEFAULT_DISTRICT).name} until it is.`}
         </span>
       )}
     </div>

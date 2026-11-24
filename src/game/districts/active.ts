@@ -27,6 +27,7 @@ export type DistrictDef = {
   breaks: Pose[]
   /** Positions birds sing from. */
   trees: { x: number; z: number }[]
+  streetAudio: { kind: 'market' | 'campus' | 'bicycle'; x: number; z: number }[]
   /** The radio the music leaks from while exploring (or none). */
   radio: [number, number, number] | null
   /** Camera orbit centre for the intro screen. */

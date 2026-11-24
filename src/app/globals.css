@@ -321,7 +321,7 @@ html.standalone .game-root {
 }
 
 .intro-title h1 {
-  font-size: clamp(72px, 12vw, 168px);
+  font-size: clamp(52px, 11vw, 156px);
   font-weight: 800;
   font-style: italic;
   line-height: 0.9;
@@ -2648,8 +2648,8 @@ textarea {
   font-size: 28px;
 }
 
-.warp-kn {
-  font-family: var(--font-kannada), sans-serif;
+.warp-odia {
+  font-family: var(--font-odia), sans-serif;
   font-style: normal;
   font-size: 16px;
   font-weight: 700;
@@ -2786,8 +2786,8 @@ textarea {
   text-shadow: 0 7px 0 rgba(0, 0, 0, 0.4);
 }
 
-.warp-card-kn {
-  font-family: var(--font-kannada), sans-serif;
+.warp-card-odia {
+  font-family: var(--font-odia), sans-serif;
   font-size: 26px;
   font-weight: 700;
   color: rgba(255, 246, 229, 0.7);
@@ -3251,7 +3251,7 @@ html.touch .find-chips {
     font-size: 20px;
   }
 
-  .warp-kn {
+  .warp-odia {
     font-size: 12px;
   }
 
@@ -3300,7 +3300,7 @@ html.touch .find-chips {
   }
 
   .intro-title h1 {
-    font-size: clamp(52px, 15vw, 110px);
+    font-size: clamp(33px, 12.1vw, 92px);
   }
 
   .intro-kicker {
@@ -3327,7 +3327,7 @@ html.touch .find-chips {
     font-size: clamp(40px, 13vw, 90px);
   }
 
-  .warp-card-kn {
+  .warp-card-odia {
     font-size: 18px;
   }
 

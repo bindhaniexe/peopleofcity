@@ -10,7 +10,7 @@ const conn = (id: string, over: Partial<Conn> = {}): Conn => ({
   created_at: '2026-10-01T10:00:00Z',
   decided_at: '2026-10-01T11:00:00Z',
   seen: true,
-  other: { id: `u-${id}`, name: 'Nandini Rao', role: 'Product Designer', character: 'designer', location: 'Koramangala' },
+  other: { id: `u-${id}`, name: 'Nandini Rao', role: 'Product Designer', character: 'designer', location: 'Saheed Nagar' },
   last_message_at: null,
   unread: 0,
   last: null,

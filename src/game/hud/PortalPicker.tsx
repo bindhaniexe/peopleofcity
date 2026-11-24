@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { DISTRICTS, districtOfLocation } from '../districts/registry'
+import { DEFAULT_DISTRICT, DISTRICTS, districtInfo, districtOfLocation } from '../districts/registry'
 import { getPeople } from '../people/directory'
 import { requestLook } from '../player/input'
 import { useGame } from '../store'
@@ -52,7 +52,7 @@ export function PortalPicker() {
           <span className="find-tag">
             <span className="warp-ring" /> WHERE TO?
           </span>
-          <span className="find-count">PORTAL · ಪ್ರಯಾಣ</span>
+          <span className="find-count">PORTAL · <span className="warp-odia" lang="or">ଯାତ୍ରା</span></span>
           <button className="find-esc" onClick={close} aria-label="Close">
             <span className="keycap">ESC</span>
           </button>
@@ -75,7 +75,7 @@ export function PortalPicker() {
                 >
                   <span className="find-who">
                     <span className="find-name">
-                      {d.title} <span className="warp-kn">{d.kn}</span>
+                      {d.title} <span className="warp-odia" lang="or">{d.odia}</span>
                     </span>
                     <span className="find-role">{d.identity}</span>
                   </span>
@@ -84,7 +84,7 @@ export function PortalPicker() {
                       <span className="find-place">YOU ARE HERE</span>
                     ) : d.built ? (
                       <>
-                        <span className="find-place">{n} DESIGNER{n === 1 ? '' : 'S'}</span>
+                        <span className="find-place">{n} RESIDENT{n === 1 ? '' : 'S'}</span>
                         <span className="find-dir">
                           LIVE HERE{liveCounts?.[d.id] ? <b className="warp-live"> · {liveCounts[d.id]} ONLINE</b> : null}
                         </span>
@@ -92,7 +92,7 @@ export function PortalPicker() {
                     ) : (
                       <>
                         <span className="find-place warp-soon">COMING SOON</span>
-                        {n > 0 && <span className="find-dir">{n} waiting · visiting Koramangala</span>}
+                        {n > 0 && <span className="find-dir">{n} waiting · visiting {districtInfo(DEFAULT_DISTRICT).name}</span>}
                       </>
                     )}
                   </span>

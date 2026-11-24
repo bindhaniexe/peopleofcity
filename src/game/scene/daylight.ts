@@ -1,4 +1,4 @@
-// TIME OF DAY (design.md §7.3): the city runs on Bengaluru's real clock. Each key below is a complete
+// TIME OF DAY (design.md §7.3): the city runs on Bhubaneswar's real clock. Each key below is a complete
 // look (sun, sky, fog, ambient, reflections, how dark it is); between keys everything blends, so the
 // light moves with the hour instead of switching. Plain data and functions: no three.js, no stores,
 // tested in daylight.test.ts. (Relative imports only, so vitest runs it without a config.)
@@ -145,7 +145,7 @@ const DAWN: Look = {
   night: 0.6,
 }
 
-/** [hour, look]. Bengaluru: sunrise ~6:10, sunset ~18:15, all year round within half an hour. */
+/** [hour, look]. Bhubaneswar: uses the sunrise and dusk lighting presets. */
 export const KEYS: [number, Look][] = [
   [0, NIGHT],
   [5, NIGHT],
@@ -206,8 +206,8 @@ export function lookAt(hour: number): Look {
   return out as Look
 }
 
-/** Hours (0–24) on Bengaluru's clock (IST, UTC+5:30, no daylight saving), wherever the player is. */
-export const bengaluruHour = (ms: number) => (((ms / 3_600_000 + 5.5) % 24) + 24) % 24
+/** Hours (0–24) on Bhubaneswar's clock (IST, UTC+5:30, no daylight saving), wherever the player is. */
+export const cityHour = (ms: number) => (((ms / 3_600_000 + 5.5) % 24) + 24) % 24
 
 /** "?time=19:30" (or "19") → 19.5; anything else → null. */
 export function parseTime(v: string | null): number | null {

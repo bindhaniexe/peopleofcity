@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next'
-import { Barlow, Barlow_Condensed, Noto_Sans_Kannada } from 'next/font/google'
+import { Barlow, Barlow_Condensed, Noto_Sans_Oriya } from 'next/font/google'
 import { GoogleAnalytics } from '@next/third-parties/google'
-import { ANALYTICS_ON, GA_ID, IS_PRODUCTION, SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from '@/lib/site'
+import { ANALYTICS_ON, CITY_NAME, GA_ID, IS_PRODUCTION, SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from '@/lib/site'
 import './globals.css'
 
 const display = Barlow_Condensed({
@@ -17,10 +17,10 @@ const body = Barlow({
   variable: '--font-body',
 })
 
-const kannada = Noto_Sans_Kannada({
-  subsets: ['kannada'],
+const odia = Noto_Sans_Oriya({
+  subsets: ['oriya'],
   weight: ['600', '700'],
-  variable: '--font-kannada',
+  variable: '--font-odia',
 })
 
 export const metadata: Metadata = {
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   description: SITE_DESCRIPTION,
   applicationName: SITE_NAME,
   // added to the iPhone home screen, the city opens full screen without Safari's bars (Phase 6B)
-  appleWebApp: { capable: true, title: 'Bengaluru', statusBarStyle: 'black-translucent' },
+  appleWebApp: { capable: true, title: CITY_NAME, statusBarStyle: 'black-translucent' },
   // every ?invite= / ?connections / preview link is the same page
   alternates: { canonical: '/' },
   openGraph: {
@@ -66,7 +66,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-IN" className={`${display.variable} ${body.variable} ${kannada.variable}`}>
+    <html lang="en-IN" className={`${display.variable} ${body.variable} ${odia.variable}`}>
       <body>
         {IS_PRODUCTION && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />}
         {children}

@@ -1,6 +1,8 @@
-// Registers every built district (import once, early). Koramangala is the default.
-import './koramangala'
-import './hsr'
-import { activateDistrict } from './active'
 
-activateDistrict('koramangala')
+// Register the playable districts before the game initializes its store.
+import './saheed-nagar'
+import './patia'
+import { activateDistrict } from './active'
+import { DEFAULT_DISTRICT } from './registry'
+
+activateDistrict(DEFAULT_DISTRICT)

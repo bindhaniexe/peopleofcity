@@ -6,7 +6,7 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { audioCtx, loadSample, onReady, ready, setListener, setMuffle, unlock, useAudio } from './engine'
 import { emitters, startAmbience } from './ambience'
 import { radioEmitter, setMusicMode, syncRadio } from './music'
-import { onDistrictChange } from '../districts/active'
+import { active, onDistrictChange } from '../districts/active'
 import { STEP_SAMPLES } from './footsteps'
 import { sfx } from './sfx'
 import { rayDistance } from '../player/collision'
@@ -77,7 +77,7 @@ export function AudioDirector() {
       if (s.travel?.stage === 'card' && p.travel?.stage !== 'card') sfx.arrive()
       if (s.trackStage === 'found' && p.trackStage !== 'found') sfx.found()
       if (s.toast && s.toast !== p.toast) (s.toast.msg.includes('VISIBLE') && s.toast.tone === 'good' ? sfx.goLive() : sfx.toast(s.toast.tone))
-      if (s.landmark !== p.landmark && s.phase === 'play' && s.landmark !== '5TH BLOCK') sfx.landmark()
+      if (s.landmark !== p.landmark && s.phase === 'play' && s.landmark !== active.def.area) sfx.landmark()
     })
     // IT'S A MATCH — the motif, fully stated (same as finding someone)
     const unsubMatch = useConnect.subscribe((s, p) => {

@@ -1,6 +1,6 @@
 import 'server-only'
 
-// FILLER (People of City). People of Bengaluru takes an application fee through its payment provider; payments aren't
+// FILLER (People of City). The upstream city could take an application fee through a payment provider; payments aren't
 // part of the open base (no checkout, no webhook). Applications work without them. Plug in your provider here if you
 // want a paid application.
 

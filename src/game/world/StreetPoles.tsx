@@ -4,7 +4,8 @@ import * as THREE from 'three'
 import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { C } from '@/lib/palette'
-import { BASE, POLE_RUNS } from '../layout'
+import { BASE } from '../layout'
+import type { Block } from '../districts/blocks'
 import { lampMat, lights, mat } from '../materials'
 import { Box } from './kit'
 
@@ -91,10 +92,10 @@ function sagCurve(a: THREE.Vector3, b: THREE.Vector3, sag: number) {
   return new THREE.CatmullRomCurve3(pts)
 }
 
-function Cables() {
+function Cables({ runs }: { runs: Block['poleRuns'] }) {
   const geos = useMemo(() => {
     const out: THREE.BufferGeometry[] = []
-    for (const run of POLE_RUNS) {
+    for (const run of runs) {
       for (let i = 0; i < run.length - 1; i++) {
         const [x0, z0, ax, az] = run[i]
         const [x1, z1] = run[i + 1]
@@ -113,7 +114,7 @@ function Cables() {
       }
     }
     return out
-  }, [])
+  }, [runs])
   const m = mat('#2A2C33', { rough: 0.6, grade: false })
   return (
     <>
@@ -124,13 +125,13 @@ function Cables() {
   )
 }
 
-export function StreetPoles() {
+export function StreetPoles({ runs }: { runs: Block['poleRuns'] }) {
   return (
     <>
-      {POLE_RUNS.flatMap((run, ri) =>
+      {runs.flatMap((run, ri) =>
         run.map(([x, z, ax, az], i) => <Pole key={`${ri}-${i}`} x={x} z={z} ax={ax} az={az} transformer={(ri + i) % 4 === 1} />),
       )}
-      <Cables />
+      <Cables runs={runs} />
       <LampsOn />
     </>
   )

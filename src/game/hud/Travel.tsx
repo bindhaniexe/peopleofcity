@@ -67,7 +67,7 @@ export function Travel() {
       <div className="warp-card">
         <div className="warp-card-kicker">ARRIVING IN</div>
         <div className="warp-card-title">{d.title}</div>
-        <div className="warp-card-kn">{d.kn}</div>
+        <div className="warp-card-odia" lang="or">{d.odia}</div>
         <div className="warp-card-id">{d.identity}</div>
         <div className="warp-card-n">
           <span className="np-dot" /> {n} DESIGNER{n === 1 ? '' : 'S'} LIVE HERE

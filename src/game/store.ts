@@ -1,6 +1,6 @@
 import { create } from 'zustand'
-import { activateDistrict } from './districts/active'
-import type { DistrictId } from './districts/registry'
+import { activateDistrict, getDistrict } from './districts/active'
+import { DEFAULT_DISTRICT, districtInfo, type DistrictId } from './districts/registry'
 
 type Phase = 'intro' | 'create' | 'play'
 
@@ -83,7 +83,7 @@ export const useGame = create<GameState>((set) => ({
   phase: 'intro',
   ready: false,
   enteredAt: 0,
-  landmark: '5TH BLOCK',
+  landmark: districtInfo(DEFAULT_DISTRICT).title,
   pointerLocked: false,
   focusId: null,
   openId: null,
@@ -98,14 +98,16 @@ export const useGame = create<GameState>((set) => ({
   trackStage: null,
   trackT0: 0,
   toast: null,
-  district: 'koramangala',
+  district: DEFAULT_DISTRICT,
   portalOpen: false,
   nearPortal: false,
   travel: null,
   portalFor: null,
   setDistrict: (district) => {
+    const def = getDistrict(district)
+    if (!def) return
     activateDistrict(district)
-    set({ district, focusId: null, openId: null, nearPortal: false, trackId: null, trackStage: null })
+    set({ district, landmark: def.area, focusId: null, openId: null, nearPortal: false, trackId: null, trackStage: null })
   },
   setPortalOpen: (portalOpen) => {
     if (portalOpen) releaseMouse()

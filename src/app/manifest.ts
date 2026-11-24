@@ -1,10 +1,10 @@
 import type { MetadataRoute } from 'next'
-import { SITE_DESCRIPTION, SITE_NAME } from '@/lib/site'
+import { CITY_NAME, SITE_DESCRIPTION, SITE_NAME } from '@/lib/site'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: SITE_NAME,
-    short_name: 'Bengaluru',
+    short_name: CITY_NAME,
     description: SITE_DESCRIPTION,
     start_url: '/',
     display: 'fullscreen',

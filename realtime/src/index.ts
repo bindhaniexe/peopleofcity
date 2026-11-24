@@ -6,7 +6,7 @@ export { City } from './city'
 export { Room } from './room'
 
 // LIVE CITY entry point (CLAUDE.md Phase 8A). Approved members only.
-//   GET /assign?d=koramangala[&with=<uid>]  (Authorization: Bearer <supabase token>) → { room, counts, rooms, online }
+//   GET /assign?d=saheed-nagar[&with=<uid>]  (Authorization: Bearer <supabase token>) → { room, counts, rooms, online }
 //   GET /city                               (Authorization: Bearer <supabase token>) → { counts, rooms, online }
 //   GET /room/<district>#<n>  (WebSocket; the token goes in the first message, never the URL)
 //   GET /health

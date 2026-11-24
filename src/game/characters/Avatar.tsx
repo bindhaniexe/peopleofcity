@@ -9,6 +9,7 @@ import { mergeGeometries, toCreasedNormals } from 'three/examples/jsm/utils/Buff
 import { useGame } from '../store'
 import { ALL_FILES, CLIPS, getCharacter, type CharacterDef, type Rig } from './roster'
 import { lights } from '../materials'
+import { ikatTexture } from '../textures'
 
 export type AvatarState = {
   mode: 'idle' | 'walk' | 'run'
@@ -201,6 +202,10 @@ function buildCharacter(source: THREE.Object3D, def: CharacterDef) {
       const mat = (src as THREE.MeshStandardMaterial).clone()
       const c = def.colors[mat.name]
       if (c && mat.color) mat.color.set(c)
+      if (def.ikat && (o.name.startsWith('Backpack') || o.parent?.name.startsWith('Backpack')) && mat.name === 'LightGreen') {
+        mat.map = ikatTexture()
+        mat.color.set('#FFFFFF')
+      }
       if (def.invisible?.includes(mat.name)) mat.visible = false
       const metal = /metal|gold/i.test(mat.name)
       mat.roughness = metal ? 0.35 : 0.55

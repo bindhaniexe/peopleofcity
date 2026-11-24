@@ -1,5 +1,7 @@
 'use client'
 
+import { CITY_TITLE } from '@/lib/site'
+
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { getCharacter } from '../characters/roster'
 import { bodies, player } from '../people/bodies'
@@ -9,9 +11,10 @@ import { CATEGORIES, searchPeople, whereIs, type Category } from '../search'
 import { useGame } from '../store'
 import { activeStatus } from '../status'
 import { isTouch } from '../device'
-import { districtInfo, homeDistrict } from '../districts/registry'
+import { districtForSearch, districtInfo } from '../districts/registry'
+import { useNet } from '../net/useNet'
 
-const EXAMPLES = ['design engineer', 'open to work', 'Indiranagar', 'design systems', 'founder']
+const EXAMPLES = ['design engineer', 'open to work', 'Rupali Square', 'design systems', 'founder']
 
 /** Plain-language direction from you, relative to where the camera faces. */
 function direction(x: number, z: number, dist: number) {
@@ -58,6 +61,7 @@ export function Search() {
   const [tick, setTick] = useState(0)
   const input = useRef<HTMLInputElement>(null)
   const people = usePeople()
+  const online = useNet((s) => s.online)
   const list = useRef<HTMLDivElement>(null)
 
   // F opens, Esc closes
@@ -106,7 +110,8 @@ export function Search() {
   const choose = (id: string) => {
     const person = people.find((x) => x.id === id)
     const g = useGame.getState()
-    const there = person ? homeDistrict(person.location) : g.district
+    if (!person || bodies.has(id)) return track(id)
+    const there = districtForSearch(person.location, useNet.getState().online[id])
     if (there === g.district) return track(id)
     g.setSearch(false)
     g.setPortalFor({ id, district: there })
@@ -129,7 +134,7 @@ export function Search() {
           <span className="find-tag">
             <span className="find-glass" /> FIND SOMEONE IN THE CITY
           </span>
-          <span className="find-count">{people.length} PEOPLE ACROSS BENGALURU</span>
+          <span className="find-count">{people.length} PEOPLE ACROSS {CITY_TITLE}</span>
           <button className="find-esc" onClick={() => setSearch(false)} aria-label="Close search">
             <span className="keycap">ESC</span>
           </button>
@@ -223,7 +228,7 @@ export function Search() {
                   </span>
                   <span className="find-where">
                     <span className="find-place">
-                      {pos ? whereIs(pos.x, pos.z) : `IN ${districtInfo(homeDistrict(p.location)).title}`}
+                      {pos ? whereIs(pos.x, pos.z) : `IN ${districtInfo(districtForSearch(p.location, online[p.id])).title}`}
                     </span>
                     {!pos && <span className="find-dir">VIA THE PORTAL</span>}
                     {pos && Number.isFinite(dist) && (

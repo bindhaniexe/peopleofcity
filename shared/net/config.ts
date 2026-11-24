@@ -2,7 +2,7 @@
 // Plain TypeScript only: no `@/` imports, no DOM, no Node — both builds compile this folder.
 
 /** Districts that have rooms (the built ones, src/game/districts/registry.ts). */
-export const ROOM_DISTRICTS = ['koramangala', 'hsr'] as const
+export const ROOM_DISTRICTS = ['saheed-nagar', 'patia'] as const
 export type RoomDistrict = (typeof ROOM_DISTRICTS)[number]
 
 /** Server ticks per second while anyone is moving. */
@@ -70,10 +70,10 @@ export const CLOSE = {
   AWAY: 4008,
 } as const
 
-/** "koramangala#2" — district plus shard number (1-based). */
+/** "saheed-nagar#2" — district plus shard number (1-based). */
 export const roomName = (d: RoomDistrict, shard: number) => `${d}#${shard}`
 export function parseRoom(name: string): { district: RoomDistrict; shard: number } | null {
-  const m = /^([a-z]+)#([1-9]\d{0,2})$/.exec(name)
+  const m = /^([a-z-]+)#([1-9]\d{0,2})$/.exec(name)
   if (!m || !(ROOM_DISTRICTS as readonly string[]).includes(m[1])) return null
   return { district: m[1] as RoomDistrict, shard: Number(m[2]) }
 }

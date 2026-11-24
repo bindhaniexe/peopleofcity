@@ -1,14 +1,14 @@
 'use client'
 
 import { C } from '@/lib/palette'
-import { BASE, BUS_STOP } from '../layout'
+import { BASE } from '../layout'
+import type { Fixture } from '../districts/blocks'
 import { Box, Sign } from './kit'
 
 const STEEL = { c: C.GRILLE, rough: 0.45, metal: 0.45, grade: false }
 
-/** BMTC bus shelter. Local +Z faces the road. */
-export function BusStop() {
-  const { x, z, rot } = BUS_STOP
+/** Ama Bus shelter. Local +Z faces the road. */
+export function BusStop({ x, z, rot, title, odia, sub }: Fixture) {
   return (
     <group position={[x, BASE, z]} rotation={[0, rot, 0]}>
       <Box s={[4.8, 0.12, 2.0]} p={[0, 0.06, 0]} c={C.CONCRETE_AGED} />
@@ -19,13 +19,13 @@ export function BusStop() {
         </group>
       ))}
       {/* roof */}
-      <Box s={[5.2, 0.16, 2.4]} p={[0, 2.72, 0]} r={[-0.05, 0, 0]} c={C.BMTC_BLUE} rough={0.5} metal={0.2} grade={false} />
+      <Box s={[5.2, 0.16, 2.4]} p={[0, 2.72, 0]} r={[-0.05, 0, 0]} c={C.TRANSIT_BLUE} rough={0.5} metal={0.2} grade={false} />
       <Box s={[5.2, 0.08, 2.5]} p={[0, 2.84, 0]} r={[-0.05, 0, 0]} c={C.WALL_WHITE} rough={0.6} grade={false} />
       <Sign
         p={[0, 3.18, 1.08]}
         w={3.4}
         h={0.62}
-        spec={{ title: 'BUS STOP', kn: 'ಬಸ್ ನಿಲ್ದಾಣ', bg: C.BMTC_BLUE, fg: '#FFF6E5' }}
+        spec={{ title: 'AMA BUS', odia: 'ଆମ ବସ୍', bg: C.TRANSIT_BLUE, fg: '#FFF6E5' }}
         frame={C.WALL_WHITE}
         depth={0.08}
       />
@@ -35,8 +35,8 @@ export function BusStop() {
         p={[1.1, 1.35, -0.76]}
         w={1.6}
         h={1.2}
-        spec={{ title: '500D  201  335E', kn: 'ಮಾರ್ಗಗಳು', sub: 'SILK BOARD · MAJESTIC · HSR', bg: C.WALL_WHITE, fg: C.BMTC_BLUE }}
-        frame={C.BMTC_BLUE}
+        spec={{ title, odia, sub, bg: C.WALL_WHITE, fg: C.TRANSIT_BLUE }}
+        frame={C.TRANSIT_BLUE}
         depth={0.04}
       />
       {/* bench */}

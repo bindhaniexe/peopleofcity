@@ -1,7 +1,7 @@
 import { audioCtx, emitter, env, noiseSource, out, ready, replaceSlot, type Emitter } from './engine'
 import { active } from '../districts/active'
 
-// Stylized Bengaluru soundscape (sounddesign.md §2, §4, §20).
+// Bhubaneswar soundscape (sounddesign.md §2, §4, §20).
 // Synthesized, placed in the world. Rule: nothing audible without a visible
 // source — except the distant city bed and far-off horns (off-screen city).
 
@@ -28,20 +28,20 @@ function every(min: number, max: number, fn: () => void, first = rand(min, max))
 
 // --- the city bed (non-positional) ----------------------------------------------
 
-function cityBed() {
+function cityBed(traffic: number) {
   const c = audioCtx()!
   const rumble = noiseSource('brown')
   const lp = c.createBiquadFilter()
   lp.type = 'lowpass'
   lp.frequency.value = 320
   const g = c.createGain()
-  g.gain.value = 0.09
+  g.gain.value = traffic
   rumble.connect(lp).connect(g).connect(root)
   // slow swell — traffic breathing in the distance
   const lfo = c.createOscillator()
   lfo.frequency.value = 0.06
   const depth = c.createGain()
-  depth.gain.value = 0.03
+  depth.gain.value = traffic / 3
   lfo.connect(depth).connect(g.gain)
   track(lfo).start()
   track(rumble).start()
@@ -57,7 +57,7 @@ function cityBed() {
   track(air).start()
 }
 
-/** Far-off Bengaluru horns — single and the classic double beep. */
+/** Far-off road horns — single and the classic double beep. */
 function horn() {
   const c = audioCtx()!
   const a = Math.random() * Math.PI * 2
@@ -112,7 +112,7 @@ function chirp(to: AudioNode) {
   }
 }
 
-/** The Asian koel — "ku-OO" calls climbing in pitch. The sound of a Bengaluru summer. */
+/** The Asian koel — "ku-OO" calls climbing in pitch. Heard from the district’s larger trees. */
 function koel(to: AudioNode) {
   const c = audioCtx()!
   const t0 = c.currentTime
@@ -222,6 +222,45 @@ function portalHum() {
   g.connect(e.input)
 }
 
+function streetSounds() {
+  const c = audioCtx()!
+  for (const { x, z, kind } of active.def.streetAudio) {
+    const source = place(x, 1.3, z, kind === 'market' ? 4 : 3)
+    emitters.push(source)
+    if (kind === 'bicycle') {
+      every(20, 45, () => {
+        for (const [delay, frequency] of [[0, 1540], [0.13, 1780]]) {
+          const oscillator = c.createOscillator()
+          const gain = c.createGain()
+          const t = c.currentTime + delay
+          oscillator.frequency.value = frequency
+          oscillator.connect(gain).connect(source.input)
+          env(gain.gain, t, 0.027, 0.009, 0.19)
+          oscillator.start(t)
+          oscillator.stop(t + 0.22)
+        }
+      })
+      continue
+    }
+
+    const crowd = noiseSource('pink')
+    const voiceBand = c.createBiquadFilter()
+    voiceBand.type = 'bandpass'
+    voiceBand.frequency.value = kind === 'market' ? 800 : 520
+    voiceBand.Q.value = 0.75
+    const gain = c.createGain()
+    gain.gain.value = kind === 'market' ? 0.033 : 0.016
+    const swell = c.createOscillator()
+    swell.frequency.value = kind === 'market' ? 0.53 : 0.31
+    const depth = c.createGain()
+    depth.gain.value = gain.gain.value / 2
+    swell.connect(depth).connect(gain.gain)
+    crowd.connect(voiceBand).connect(gain).connect(source.input)
+    track(crowd).start()
+    track(swell).start()
+  }
+}
+
 export function startAmbience() {
   const c = audioCtx()
   if (!c || started === active.def.id) return
@@ -244,8 +283,10 @@ export function startAmbience() {
     myRoot.disconnect()
   })
   emitters.length = 0
-  cityBed()
+  const campus = active.def.id === 'patia'
+  cityBed(campus ? 0.11 : 0.065)
   park()
   portalHum()
-  every(7, 18, horn, 3)
+  streetSounds()
+  every(campus ? 6 : 11, campus ? 14 : 23, horn, 3)
 }

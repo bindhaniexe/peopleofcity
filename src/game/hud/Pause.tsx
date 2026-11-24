@@ -322,7 +322,7 @@ function HomeScreenSteps() {
         <li>
           Keep <b>Open as Web App</b> on, then tap <b>Add</b>.
         </li>
-        <li>Open Bengaluru from your home screen.</li>
+        <li>Open Bhubaneswar from your home screen.</li>
       </ol>
     </>
   )

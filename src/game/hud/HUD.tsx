@@ -1,5 +1,6 @@
 'use client'
 
+import { CITY_NAME, CITY_TITLE } from '@/lib/site'
 import { useGame } from '../store'
 import { districtInfo } from '../districts/registry'
 import { ConnectHud } from './Connections'
@@ -20,7 +21,7 @@ export function HUD() {
   const talking = useGame((s) => !!s.openId || s.searchOpen || s.paused || s.connectOpen || s.invitesOpen || s.profileOpen)
   const district = useGame((s) => s.district)
   const info = districtInfo(district)
-  // Bengaluru's time, the same clock the light runs on
+  // The same local clock that drives street lighting.
   const hour = useClock((s) => s.hour)
 
   if (phase !== 'play') return null
@@ -30,13 +31,15 @@ export function HUD() {
       <div className="hud-location">
         <div className="slant panel">
           <div className="unslant">
-            <div className="hud-city">BENGALURU</div>
+            <div className="hud-city">{CITY_TITLE}</div>
             <div className="hud-district">{info.title}</div>
           </div>
         </div>
-        <div key={landmark} className="slant hud-landmark">
-          <span className="unslant">{landmark}</span>
-        </div>
+        {landmark !== info.title && (
+          <div key={landmark} className="slant hud-landmark">
+            <span className="unslant">{landmark}</span>
+          </div>
+        )}
         <Missions />
       </div>
 
@@ -50,7 +53,7 @@ export function HUD() {
             </span>
           </button>
         </div>
-        <div className="slant hud-weather" title="Time in Bengaluru">
+        <div className="slant hud-weather" title={`Time in ${CITY_NAME}`}>
           <span className="unslant">
             {phaseAt(hour) === 'night' ? '☾' : '☀'} {clockText(hour)}
           </span>
