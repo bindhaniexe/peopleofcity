@@ -11,7 +11,7 @@ import './index'
 describe('Bhubaneswar districts', () => {
   it('starts in Saheed Nagar and registers exactly the built districts as live rooms', () => {
     expect(active.def.id).toBe('saheed-nagar')
-    expect(DISTRICTS.filter((district) => district.built).map((district) => district.id)).toEqual(['saheed-nagar', 'patia'])
+    expect(DISTRICTS.filter((district) => district.built).map((district) => district.id)).toEqual(['saheed-nagar', 'patia', 'old-town', 'unit-ii', 'jayadev-vihar'])
     expect(ROOM_DISTRICTS).toEqual(['saheed-nagar', 'patia'])
     for (const district of ROOM_DISTRICTS) {
       expect(parseRoom(roomName(district, 2))).toEqual({ district, shard: 2 })

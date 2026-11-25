@@ -1,12 +1,10 @@
 import { create } from 'zustand'
-import { activateDistrict, getDistrict } from './districts/active'
 import { DEFAULT_DISTRICT, districtInfo, type DistrictId } from './districts/registry'
+import { busTrip, type BusTrip } from './city/transit'
 
 type Phase = 'intro' | 'create' | 'play'
 
 export type TrackStage = 'fly' | 'hold' | 'walk' | 'found' | null
-
-export type Travel = { to: DistrictId; stage: 'cover' | 'card' | 'reveal'; findId?: string } | null
 
 type Toast = { msg: string; tone: 'good' | 'info' | 'bad'; id: number } | null
 
@@ -37,24 +35,20 @@ type GameState = {
   trackStage: TrackStage
   trackT0: number
   toast: Toast
-  /** The district currently loaded. */
+  /** Current neighbourhood and the one chosen when entering the city. */
   district: DistrictId
-  /** Standing in the portal: the "WHERE TO?" picker is open. */
-  portalOpen: boolean
-  /** Close enough to the portal to be offered the travel menu (it never opens by itself). */
-  nearPortal: boolean
-  travel: Travel
-  /** Heading to the portal to reach someone in another district. */
-  portalFor: { id: string; district: DistrictId } | null
-  setDistrict: (d: DistrictId) => void
-  setPortalOpen: (open: boolean) => void
-  setNearPortal: (near: boolean) => void
-  /** Start a trip. `findId`: track this person on arrival. */
-  startTravel: (to: DistrictId, findId?: string) => void
-  setTravelStage: (stage: 'cover' | 'card' | 'reveal' | null) => void
-  setPortalFor: (v: { id: string; district: DistrictId } | null) => void
+  entryArea: DistrictId
+  cityOverlay: 'map' | 'bus' | null
+  nearbyStop: string | null
+  ride: BusTrip | null
+  mapTarget: string | null
+  setArea: (area: DistrictId) => void
+  setCityOverlay: (overlay: GameState['cityOverlay']) => void
+  setMapTarget: (id: string | null) => void
+  board: (destination: string) => void
+  finishRide: () => void
   setReady: () => void
-  enter: () => void
+  enter: (area?: DistrictId) => void
   /** Open "become visible" (character creation + profile). */
   startCreate: () => void
   endCreate: () => void
@@ -69,7 +63,7 @@ type GameState = {
   setInvitesOpen: (open: boolean) => void
   setProfileOpen: (open: boolean) => void
   setPaused: (paused: boolean) => void
-  track: (id: string) => void
+  track: (id: string, fly?: boolean) => void
   setTrackStage: (stage: TrackStage) => void
   stopTracking: () => void
   showToast: (msg: string, tone?: 'good' | 'info' | 'bad') => void
@@ -79,7 +73,7 @@ const releaseMouse = () => {
   if (typeof document !== 'undefined' && document.pointerLockElement) document.exitPointerLock()
 }
 
-export const useGame = create<GameState>((set) => ({
+export const useGame = create<GameState>((set, get) => ({
   phase: 'intro',
   ready: false,
   enteredAt: 0,
@@ -99,29 +93,29 @@ export const useGame = create<GameState>((set) => ({
   trackT0: 0,
   toast: null,
   district: DEFAULT_DISTRICT,
-  portalOpen: false,
-  nearPortal: false,
-  travel: null,
-  portalFor: null,
-  setDistrict: (district) => {
-    const def = getDistrict(district)
-    if (!def) return
-    activateDistrict(district)
-    set({ district, landmark: def.area, focusId: null, openId: null, nearPortal: false, trackId: null, trackStage: null })
+  entryArea: DEFAULT_DISTRICT,
+  cityOverlay: null,
+  nearbyStop: null,
+  ride: null,
+  mapTarget: null,
+  setArea: (district) => set({ district }),
+  setCityOverlay: (cityOverlay) => {
+    set({ cityOverlay })
+    if (cityOverlay) releaseMouse()
   },
-  setPortalOpen: (portalOpen) => {
-    if (portalOpen) releaseMouse()
-    set({ portalOpen })
+  setMapTarget: (mapTarget) => set({ mapTarget, cityOverlay: null, trackId: null, trackStage: null }),
+  board: (destination) => {
+    const { cityOverlay, nearbyStop, ride } = get()
+    if (cityOverlay !== 'bus' || !nearbyStop || ride) return
+    const trip = busTrip(nearbyStop, destination)
+    if (trip) set({ ride: trip, cityOverlay: null, focusId: null, trackId: null, trackStage: null, mapTarget: null })
   },
-  setNearPortal: (nearPortal) => set({ nearPortal }),
-  startTravel: (to, findId) => set({ travel: { to, stage: 'cover', findId }, portalOpen: false, nearPortal: false, searchOpen: false, openId: null, portalFor: null, trackId: null, trackStage: null }),
-  setTravelStage: (stage) => set((s) => ({ travel: stage && s.travel ? { ...s.travel, stage } : null })),
-  setPortalFor: (portalFor) => set({ portalFor }),
+  finishRide: () => set({ ride: null, nearbyStop: null }),
   setReady: () => set({ ready: true }),
-  enter: () => set({ phase: 'play', enteredAt: performance.now() }),
+  enter: (entryArea = DEFAULT_DISTRICT) => set({ phase: 'play', entryArea, enteredAt: performance.now() }),
   startCreate: () => {
     releaseMouse()
-    set({ phase: 'create', openId: null, searchOpen: false, profileOpen: false, paused: false, focusId: null, trackId: null, trackStage: null })
+    set({ phase: 'create', openId: null, searchOpen: false, profileOpen: false, paused: false, focusId: null, trackId: null, trackStage: null, cityOverlay: null, mapTarget: null, ride: null })
   },
   endCreate: () => set({ phase: 'play', enteredAt: performance.now() }),
   setLandmark: (landmark) => set({ landmark }),
@@ -156,7 +150,7 @@ export const useGame = create<GameState>((set) => ({
     if (paused) releaseMouse()
     set(paused ? { paused, pausedAt: performance.now() } : { paused })
   },
-  track: (trackId) => set({ trackId, trackStage: 'fly', trackT0: performance.now(), searchOpen: false, openId: null }),
+  track: (trackId, fly = true) => set({ trackId, trackStage: fly ? 'fly' : 'walk', trackT0: performance.now(), searchOpen: false, openId: null, mapTarget: null }),
   setTrackStage: (trackStage) => set({ trackStage, trackT0: performance.now() }),
   stopTracking: () => set({ trackId: null, trackStage: null }),
   showToast: (msg, tone = 'info') => set({ toast: { msg, tone, id: Date.now() } }),

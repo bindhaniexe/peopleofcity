@@ -106,7 +106,7 @@ export function useYouKeys() {
       if (!tab || e.repeat || isTyping(e)) return
       const g = useGame.getState()
       const me = useDirectory.getState().me
-      if (g.phase !== 'play' || !me || g.openId || g.searchOpen || g.paused || g.portalOpen || g.travel || g.connectOpen) return
+      if (g.phase !== 'play' || !me || g.openId || g.searchOpen || g.paused || g.cityOverlay || g.ride || g.connectOpen) return
       if (tab === 'status' && !canStatus) return
       if (tab === 'invites' && me.status !== 'approved') return
       e.preventDefault()

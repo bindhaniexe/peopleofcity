@@ -1,5 +1,5 @@
 
-import { BASE, BOUNDS, type AABB, type BuildingSpec, type ShopSpec, type TreeSpec } from '../layout'
+import { BASE, BOUNDS, shopFootprint, type AABB, type BuildingSpec, type ShopSpec, type TreeSpec } from '../layout'
 import type { DistrictDef, Surface } from './active'
 
 export type Rect = { x0: number; x1: number; z0: number; z1: number }
@@ -30,7 +30,7 @@ export const footprint = (x: number, z: number, w: number, d: number, rot = 0): 
   return { x0: x - hx, x1: x + hx, z0: z - hz, z1: z + hz }
 }
 
-const contains = ({ x0, x1, z0, z1 }: Rect, x: number, z: number) => x >= x0 && x < x1 && z >= z0 && z < z1
+export const contains = ({ x0, x1, z0, z1 }: Rect, x: number, z: number) => x >= x0 && x < x1 && z >= z0 && z < z1
 const inAny = (rects: Rect[], x: number, z: number) => rects.some((rect) => contains(rect, x, z))
 const collider = (rect: Rect, height: number): AABB => ({
   min: [rect.x0, 0, rect.z0],
@@ -44,16 +44,16 @@ export function blockSurface(block: Block, x: number, z: number): Exclude<Surfac
   return inAny(block.lawns, x, z) ? 'grass' : 'pavers'
 }
 
-const heightOf = (block: Block, x: number, z: number) => {
+export const heightOf = (block: Block, x: number, z: number) => {
   if (block.median && inAny(block.median, x, z)) return BASE + 0.06
   return blockSurface(block, x, z) === 'asphalt' ? 0 : BASE
 }
 
 /** Partition the ground at authored edges so roads, footpaths and walking surfaces agree. */
-export function groundTiles(block: Block) {
-  const zones = [districtRect, ...block.roads, ...block.paving, ...block.lawns, ...(block.median ?? [])]
-  const xs = [...new Set(zones.flatMap(({ x0, x1 }) => [x0, x1]))].sort((a, b) => a - b)
-  const zs = [...new Set(zones.flatMap(({ z0, z1 }) => [z0, z1]))].sort((a, b) => a - b)
+export function groundTiles(block: Block, bounds = districtRect) {
+  const zones = [bounds, ...block.roads, ...block.paving, ...block.lawns, ...(block.median ?? [])]
+  const xs = [...new Set(zones.flatMap(({ x0, x1 }) => [x0, x1]))].filter((x) => x >= bounds.x0 && x <= bounds.x1).sort((a, b) => a - b)
+  const zs = [...new Set(zones.flatMap(({ z0, z1 }) => [z0, z1]))].filter((z) => z >= bounds.z0 && z <= bounds.z1).sort((a, b) => a - b)
   return xs.slice(1).flatMap((x1, i) => zs.slice(1).map((z1, j) => {
     const x0 = xs[i]
     const z0 = zs[j]
@@ -63,21 +63,27 @@ export function groundTiles(block: Block) {
   }))
 }
 
-export function buildDistrict(block: Block, def: Omit<DistrictDef, 'colliders' | 'ground' | 'surface' | 'trees'>): DistrictDef {
-  const { portal } = def
-  const trees = block.trees.map(({ x, z }) => ({ x, z }))
-  const colliders = [
+export function blockColliders(block: Block): AABB[] {
+  return [
     ...block.buildings.map((b) => collider(footprint(b.x, b.z, b.w, b.d, b.rot), 30)),
-    ...block.shops.map((s) => collider(footprint(s.x, s.z, 6, 8, s.rot), 14)),
+    ...block.shops.map((s) => {
+      const { w, d } = shopFootprint(s)
+      return collider(footprint(s.x, s.z, w, d, s.rot), 14)
+    }),
     ...block.solids.map(({ rect, height }) => collider(rect, height)),
     ...block.trees.map(({ x, z, s }) => collider(footprint(x, z, s * 0.65, s * 0.65), 4)),
     ...block.signs.map(({ x, z }) => collider(footprint(x, z, 0.12, 0.12), 2.65)),
     ...block.poleRuns.flat().map(([x, z]) => collider(footprint(x, z, 0.28, 0.28), 8.4)),
     ...block.stops.map(({ x, z, rot }) => collider(footprint(x - Math.sin(rot) * 0.75, z - Math.cos(rot) * 0.75, 4.2, 0.35, rot), 2.7)),
-    ...[-2.45, 2.45].map((offset) => collider(footprint(
-      portal.x + Math.cos(portal.face) * offset, portal.z - Math.sin(portal.face) * offset, 1, 1,
-    ), 6)),
   ]
+}
+
+export function buildDistrict(block: Block, def: Omit<DistrictDef, 'colliders' | 'ground' | 'surface' | 'trees'>): DistrictDef {
+  const { portal } = def
+  const trees = block.trees.map(({ x, z }) => ({ x, z }))
+  const colliders = [...blockColliders(block), ...[-2.45, 2.45].map((offset) => collider(footprint(
+    portal.x + Math.cos(portal.face) * offset, portal.z - Math.sin(portal.face) * offset, 1, 1,
+  ), 6))]
   return {
     ...def,
     colliders,

@@ -3,11 +3,8 @@
 
 import type { ReactNode } from 'react'
 import { C } from '@/lib/palette'
-import { type Block, type Fixture } from '../districts/blocks'
-import type { Pose } from '../districts/active'
+import { type Block, type Fixture, type Rect } from '../districts/blocks'
 import { BASE } from '../layout'
-import { Portal } from './Portal'
-import { Background } from './Background'
 import { Building } from './Building'
 import { BusStop } from './BusStop'
 import { Ground } from './Ground'
@@ -27,16 +24,16 @@ function StreetSign({ x, z, rot, title, odia, sub }: Fixture) {
   )
 }
 
-export function World({ block, portal, skyline, children }: {
+export function World({ block, bounds, water, children }: {
   block: Block
-  portal: Pose
-  skyline: 'neighbourhood' | 'campus'
+  bounds: Rect
+  water?: Rect[]
   children: ReactNode
 }) {
   return (
     <>
       <StaticMerge>
-        <Ground block={block} />
+        <Ground block={block} bounds={bounds} water={water} />
         {block.buildings.map((building) => <Building key={building.seed} {...building} />)}
         {block.shops.map((shop) => <ShopUnit key={shop.seed} {...shop} />)}
         {block.stops.map((stop) => <BusStop key={stop.title} {...stop} />)}
@@ -48,10 +45,8 @@ export function World({ block, portal, skyline, children }: {
         )}
         <StreetTrees trees={block.trees} />
         <StreetPoles runs={block.poleRuns} />
-        <Background skyline={skyline} />
         {children}
       </StaticMerge>
-      <Portal pose={portal} />
     </>
   )
 }

@@ -4,8 +4,7 @@
 import { C } from '@/lib/palette'
 import { BASE } from '../../layout'
 import { Box, Sign, Win } from '../../world/kit'
-import { World } from '../../world/World'
-import { block, CAMPUS, CAMPUS_GATE, INFOCITY, INFOCITY_GATE, KIIT_PORTAL, MARUTI } from './layout'
+import { block, CAMPUS, CAMPUS_GATE, INFOCITY, INFOCITY_GATE, MARUTI } from './layout'
 
 function CampusFrontage() {
   const w = CAMPUS.x1 - CAMPUS.x0
@@ -34,7 +33,7 @@ function CampusFrontage() {
           )
         })}
         {[-3, 3].map((x) => <Box key={x} s={[0.95, 4.3, 0.9]} p={[x, 2.15, 0]} c="#B3614D" />)}
-        <Box s={[7.65, 0.3, 1.75]} p={[0, 4.32, 0]} c="#2E594C" radius={0.1} />
+        <Box s={[8.5, 0.3, 1.75]} p={[0, 4.32, 0]} c="#2E594C" radius={0.1} />
         <Sign p={[0, 3.93, -0.9]} r={[0, Math.PI, 0]} w={5.5} h={0.93} spec={{ title: 'KIIT CAMPUS', odia: 'କିଟ୍ ପରିସର', bg: '#234D41', fg: '#FFF5DA' }} />
       </group>
     </>
@@ -79,12 +78,12 @@ function MarutiMall() {
   )
 }
 
-export function PatiaWorld() {
+export function PatiaLandmarks() {
   return (
-    <World block={block} portal={KIIT_PORTAL} skyline="campus">
+    <>
       <CampusFrontage />
       <InfocityFrontage />
       <MarutiMall />
-    </World>
+    </>
   )
 }

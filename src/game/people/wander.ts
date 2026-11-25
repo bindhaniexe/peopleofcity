@@ -1,7 +1,7 @@
-import { BOUNDS } from '../layout'
 import { findPath } from '../nav'
 import { active, type Pose } from '../districts/active'
-import { districtOfLocation, placeKind } from '../districts/registry'
+import { citySectionAt } from '../city/runtime'
+import { homeArea, placeKind } from '../districts/registry'
 
 // Offline characters: they keep walking around their neighbourhood.
 // Nothing more — pick a walkable destination, walk there around buildings, repeat.
@@ -11,7 +11,6 @@ const WALK_MAX = 1.5
 const TURN_RATE = 2.6 // rad/s — calm, natural turns
 const VISITOR_RADIUS = 14
 
-const FULL = { minX: -BOUNDS + 3, maxX: BOUNDS - 3, minZ: -BOUNDS + 3, maxZ: BOUNDS - 3 }
 
 // Café break spots come from the loaded district (snack counters, tea shops and plazas).
 type Break = Pose
@@ -57,8 +56,11 @@ export class Wanderer {
     this.z = this.lastZ = z
     this.facing = facing
     // residents roam their whole district; visitors (district not built yet) stay near their spot
-    const home = districtOfLocation(neighbourhood)
-    this.area = placeKind(neighbourhood) === 'district' && home.built && home.id === active.def.id ? FULL : { minX: x - VISITOR_RADIUS, maxX: x + VISITOR_RADIUS, minZ: z - VISITOR_RADIUS, maxZ: z + VISITOR_RADIUS }
+    const section = citySectionAt(x, z)
+    const local = placeKind(neighbourhood) === 'district' && section?.area === homeArea(neighbourhood)
+    const b = local ? section.worldBounds : null
+    this.area = b ? { minX: b.x0 + 2, maxX: b.x1 - 2, minZ: b.z0 + 2, maxZ: b.z1 - 2 }
+      : { minX: x - VISITOR_RADIUS, maxX: x + VISITOR_RADIUS, minZ: z - VISITOR_RADIUS, maxZ: z + VISITOR_RADIUS }
   }
 
   private pickDestination() {

@@ -11,7 +11,7 @@ An open foundation for building interactive virtual cities where people can disc
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Built with Three.js](https://img.shields.io/badge/built%20with-three.js-black.svg)](https://threejs.org)
 
-**People of Bhubaneswar** brings the People of City engine to Saheed Nagar and Patia in Odisha.
+**People of Bhubaneswar** brings the People of City engine to a connected, walkable version of Bhubaneswar, Odisha.
 
 
 </div>
@@ -67,7 +67,8 @@ Everything here exists in this codebase today.
 
 **The city** (runs with no backend at all)
 - **Saheed Nagar.** Walk Janpath from Rupali Square into shopping lanes and the forecourt of BMC Bhawani Mall.
-- **Patia.** Travel through the portal to KIIT Square, walk the campus and storefronts, then follow Nandankanan Road to the Infocity turn.
+- **Patia to Old Town.** Walk from KIIT along Nandankanan Road and Janpath through Jayadev Vihar, Saheed Nagar, Ram Mandir and Market Building to Bindu Sagar.
+- **City map and Ama Bus.** Press **M** for walking directions or board an on-demand ride at a signed shelter.
 - **Day and night on the city's real clock.** The sky, sun, street lights and night windows follow the local time (`src/game/scene/`).
 - **Cinematic look:** post-processing with ambient occlusion, bloom, filmic tone mapping and a vignette, scaled down on phones.
 - **Sound:** generative music and ambience, synthesised live in the browser, plus UI sounds (`src/game/audio/`).
@@ -187,7 +188,7 @@ This is what the foundation is for. The short version:
 
 1. **Name it.** Change the site's name, title, description and address in `src/lib/site.ts`, and the city name in the HUD (`src/game/hud/HUD.tsx`) and the web app manifest (`src/app/manifest.ts`).
 2. **Set the clock.** The day and night cycle uses Indian Standard Time. The clock and lighting presets live in `src/game/scene/daylight.ts`.
-3. **Draw your districts.** Each district lives in `src/game/districts/`, and the list of districts with their names and colours is in `src/game/districts/registry.ts`.
+3. **Draw your city.** Define street sections and destinations in `src/game/city/`. Set neighbourhood names and colours in `src/game/districts/registry.ts`.
 4. **Build your streets.** Buildings are assembled from the kit in `src/game/world/kit.tsx` (walls, windows, balconies, signs, awnings and more) and placed in `src/game/layout.ts`.
 5. **Paint it.** The whole city's colours are one palette in `src/lib/palette.ts`.
 6. **Dress your people.** Character styles are in `src/game/characters/roster.ts`, and the models are GLB files in `public/models/characters/`.
@@ -216,7 +217,7 @@ Improvements to the underlying foundation (graphics, gameplay, environments and 
 ## Roadmap
 
 **Available now**
-- A walkable, stylised 3D city with two districts and portal travel
+- A continuous, stylised 3D city with walking directions and bus rides
 - Day and night on the real clock, generative music and ambience
 - Characters, name plates, sample residents, and find-someone search
 - Desktop and touch controls

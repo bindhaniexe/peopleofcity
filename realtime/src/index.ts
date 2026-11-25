@@ -6,9 +6,9 @@ export { City } from './city'
 export { Room } from './room'
 
 // LIVE CITY entry point (CLAUDE.md Phase 8A). Approved members only.
-//   GET /assign?d=saheed-nagar[&with=<uid>]  (Authorization: Bearer <supabase token>) → { room, counts, rooms, online }
-//   GET /city                               (Authorization: Bearer <supabase token>) → { counts, rooms, online }
-//   GET /room/<district>#<n>  (WebSocket; the token goes in the first message, never the URL)
+//   GET /assign?d=bhubaneswar[&with=<uid>] (Authorization: Bearer <supabase token>) → { room, counts, rooms, online }
+//   GET /city?d=bhubaneswar                (Authorization: Bearer <supabase token>) → { counts, rooms, online }
+//   GET /room/<namespace>#<n> (WebSocket; the token goes in the first message, never the URL)
 //   GET /health
 
 function originAllowed(env: Env, origin: string | null) {
@@ -72,7 +72,7 @@ export default {
         if (!success) return json({ error: 'slow down' }, origin, env, 429)
       }
       const city = cityOf(env)
-      if (url.pathname === '/city') return json(await city.read(), origin, env)
+      if (url.pathname === '/city') return json(await city.read(url.searchParams.get('d')), origin, env)
       const withUid = url.searchParams.get('with') ?? undefined
       const r = await city.assign(url.searchParams.get('d') ?? '', withUid && /^[0-9a-f-]{36}$/i.test(withUid) ? withUid : undefined)
       return json(r, origin, env)

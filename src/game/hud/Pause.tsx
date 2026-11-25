@@ -30,7 +30,8 @@ function controlsFor(o: { member: boolean; hasProfile: boolean; signedIn: boolea
     ...(o.member ? ([[['I'], 'INVITES']] as [string[], string][]) : []),
     ...(o.member ? ([[['J'], 'MISSIONS']] as [string[], string][]) : []),
     ...(!o.signedIn ? ([[['L'], 'SIGN IN']] as [string[], string][]) : []),
-    [['M'], 'MUTE'],
+    [['M'], 'CITY MAP'],
+    [['U'], 'MUTE'],
     [['ESC'], 'PAUSE'],
   ]
 }
@@ -70,20 +71,20 @@ export function Pause() {
   }
 
   useEffect(() => {
-    // When a popup (portal menu, finder, profile) closes, the browser may still report
+    // When a popup closes, the browser may still report
     // the mouse-lock drop or a repeated Esc a moment later. Those belong to the popup
     // that just closed — they must not open Pause.
     let overlayClosedAt = -1e9
     const unsub = useGame.subscribe((s, p) => {
-      const was = p.portalOpen || p.searchOpen || p.statusOpen || p.connectOpen || p.invitesOpen || p.profileOpen || !!p.openId
-      const now = s.portalOpen || s.searchOpen || s.statusOpen || s.connectOpen || s.invitesOpen || s.profileOpen || !!s.openId
+      const was = p.cityOverlay || p.searchOpen || p.statusOpen || p.connectOpen || p.invitesOpen || p.profileOpen || !!p.openId
+      const now = s.cityOverlay || s.searchOpen || s.statusOpen || s.connectOpen || s.invitesOpen || s.profileOpen || !!s.openId
       if (was && !now) overlayClosedAt = performance.now()
     })
     const plain = () => {
       const g = useGame.getState()
       const cinematic = g.trackStage === 'fly' || g.trackStage === 'hold'
       return (
-        g.phase === 'play' && !g.openId && !g.searchOpen && !g.statusOpen && !g.connectOpen && !g.invitesOpen && !g.profileOpen && !g.paused && !cinematic && !g.portalOpen && !g.travel && performance.now() - overlayClosedAt > 700
+        g.phase === 'play' && !g.openId && !g.searchOpen && !g.statusOpen && !g.connectOpen && !g.invitesOpen && !g.profileOpen && !g.paused && !cinematic && !g.cityOverlay && performance.now() - overlayClosedAt > 700
       )
     }
 
@@ -361,7 +362,7 @@ function SoundSettings() {
         <span className="cr-switch" />
         <span>
           <b>MUTE ALL</b>
-          <em>Or press M any time</em>
+          <em>Or press U any time</em>
         </span>
       </button>
     </div>

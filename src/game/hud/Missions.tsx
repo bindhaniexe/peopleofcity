@@ -1,7 +1,5 @@
 'use client'
 
-import { DISTRICTS } from '../districts/registry'
-
 import { useEffect } from 'react'
 import { MISSIONS, allDone, currentMission, type MissionId } from '../missions'
 import { PREVIEW, useMissions } from '../missionsStore'
@@ -21,8 +19,7 @@ function go(id: MissionId) {
   if (id === 'note') return g.setStatusOpen(true)
   if (id === 'invite') return g.setInvitesOpen(true)
   if (id === 'cross') {
-    g.setPortalFor(null)
-    return g.track('portal')
+    return g.setCityOverlay('map')
   }
   // the nearest real member here with a note up; nobody → the finder
   const me = useDirectory.getState().me?.id
@@ -46,9 +43,8 @@ export function Missions() {
   const retired = useMissions((s) => s.retired)
   const collapsed = useMissions((s) => s.collapsed)
   const justDone = useMissions((s) => s.justDone)
-  const district = useGame((s) => s.district)
   const busy = useGame(
-    (s) => !!s.openId || s.searchOpen || s.paused || s.connectOpen || s.invitesOpen || s.profileOpen || s.statusOpen || s.portalOpen || !!s.travel,
+    (s) => !!s.openId || s.searchOpen || s.paused || s.connectOpen || s.invitesOpen || s.profileOpen || s.statusOpen || !!s.cityOverlay || !!s.ride,
   )
   const finished = allDone(done)
   const live = !!userId && !hidden && !retired
@@ -59,7 +55,7 @@ export function Missions() {
     const onKey = (e: KeyboardEvent) => {
       const g = useGame.getState()
       if (e.code !== 'KeyJ' || e.repeat || isTyping(e) || g.phase !== 'play') return
-      if (g.openId || g.searchOpen || g.paused || g.connectOpen || g.invitesOpen || g.profileOpen || g.statusOpen || g.portalOpen) return
+      if (g.openId || g.searchOpen || g.paused || g.connectOpen || g.invitesOpen || g.profileOpen || g.statusOpen || g.cityOverlay || g.ride) return
       useMissions.getState().toggle()
     }
     window.addEventListener('keydown', onKey)
@@ -128,7 +124,7 @@ export function Missions() {
                 </span>
                 {on && (
                   <span className="ms-hint">
-                    {m.id === 'cross' ? `Take the portal to ${DISTRICTS.find((candidate) => candidate.built && candidate.id !== district)?.name}.` : m.hint}
+                    {m.hint}
                   </span>
                 )}
               </span>

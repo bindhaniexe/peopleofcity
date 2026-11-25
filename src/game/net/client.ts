@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import { CLOSE, ROOM_DISTRICTS, SEND_HZ } from '@shared/net/config'
+import { CITY_ROOM, CLOSE, parseRoom, SEND_HZ } from '@shared/net/config'
 import { Op, decodeServer, encodeHello, encodePos, qPos, qYaw, type Anim } from '@shared/net/protocol'
 import { player } from '../people/bodies'
 import { useDirectory } from '../people/directory'
@@ -20,7 +20,7 @@ const CITY_POLL_MS = 15_000
 const MAX_BACKOFF_MS = 30_000
 
 let ws: WebSocket | null = null
-let wantDistrict: string | null = null
+let wantDistrict: typeof CITY_ROOM | null = null
 let gen = 0
 let tries = 0
 let retry: ReturnType<typeof setTimeout> | null = null
@@ -130,7 +130,7 @@ async function connect() {
     if (my !== gen) return
     if (!t) throw new Error('signed out')
     const game = useGame.getState()
-    const track = game.travel?.findId ?? game.trackId
+    const track = game.trackId
     const q = new URLSearchParams({ d: district })
     if (track && /^[0-9a-f-]{36}$/i.test(track)) q.set('with', track)
     const res = await fetch(`${BASE}/assign?${q}`, { headers: { Authorization: `Bearer ${t}` } })
@@ -138,6 +138,7 @@ async function connect() {
     if (!res.ok) throw new Error(`assign ${res.status}`)
     const a = (await res.json()) as { room: string; counts: Record<string, number>; rooms: Record<string, number>; online: Record<string, string> }
     if (my !== gen) return
+    if (parseRoom(a.room)?.district !== CITY_ROOM) throw new Error('connected city room unavailable')
     useNet.setState({ cityCounts: a.counts, cityRooms: a.rooms ?? {}, online: a.online, room: a.room })
 
     const sock = new WebSocket(`${WS_BASE}/room/${encodeURIComponent(a.room)}`)
@@ -239,7 +240,7 @@ async function readCity() {
   try {
     const t = await token()
     if (!t) return
-    const res = await fetch(`${BASE}/city`, { headers: { Authorization: `Bearer ${t}` } })
+    const res = await fetch(`${BASE}/city?d=${CITY_ROOM}`, { headers: { Authorization: `Bearer ${t}` } })
     if (!res.ok) return
     const c = (await res.json()) as { counts: Record<string, number>; rooms: Record<string, number>; online: Record<string, string> }
     useNet.setState({ cityCounts: c.counts, cityRooms: c.rooms ?? {}, online: c.online })
@@ -249,8 +250,7 @@ async function readCity() {
 }
 
 /** Join the room for this district (null = leave). */
-function want(district: string | null) {
-  const d = district && (ROOM_DISTRICTS as readonly string[]).includes(district) ? district : null
+function want(d: typeof CITY_ROOM | null) {
   if (d === wantDistrict) return
   wantDistrict = d
   if (retry) clearTimeout(retry)
@@ -283,11 +283,11 @@ export function startNet() {
   const sync = () => {
     const g = useGame.getState()
     const isMember = useDirectory.getState().me?.status === 'approved'
-    want(isMember && g.phase === 'play' && !g.travel ? g.district : null)
+    want(isMember && g.phase === 'play' ? CITY_ROOM : null)
   }
   sync()
   const unGame = useGame.subscribe((s, p) => {
-    if (s.phase !== p.phase || s.district !== p.district || !!s.travel !== !!p.travel) sync()
+    if (s.phase !== p.phase) sync()
   })
   // signing in or out, or being approved, changes who you are in the room: rejoin
   const unDir = useDirectory.subscribe((s, p) => {

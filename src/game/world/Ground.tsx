@@ -4,7 +4,7 @@
 import * as THREE from 'three'
 import { useMemo } from 'react'
 import { C } from '@/lib/palette'
-import { districtRect, type Block, type Rect, groundTiles } from '../districts/blocks'
+import { type Block, type Rect, groundTiles } from '../districts/blocks'
 import { asphaltTex, grassTex, paverTex } from '../textures'
 import { texMat } from '../materials'
 import { Box } from './kit'
@@ -20,27 +20,14 @@ function surfaceGeometry({ x0, x1, z0, z1 }: Rect, y: number, repeat: number) {
   return geometry
 }
 
-function roadExtensions(roads: Rect[]) {
-  const length = 45
-  return roads.flatMap((road) => {
-    const extensions: Rect[] = []
-    if (road.x0 === districtRect.x0) extensions.push({ ...road, x0: road.x0 - length, x1: road.x0 })
-    if (road.x1 === districtRect.x1) extensions.push({ ...road, x0: road.x1, x1: road.x1 + length })
-    if (road.z0 === districtRect.z0) extensions.push({ ...road, z0: road.z0 - length, z1: road.z0 })
-    if (road.z1 === districtRect.z1) extensions.push({ ...road, z0: road.z1, z1: road.z1 + length })
-    return extensions.map((rect) => surfaceGeometry(rect, 0, 5))
-  })
-}
-
-export function Ground({ block }: { block: Block }) {
+export function Ground({ block, bounds, water }: { block: Block; bounds: Rect; water?: Rect[] }) {
   const materials = {
     asphalt: texMat('district-asphalt', asphaltTex, { rough: 0.96 }),
     pavers: texMat('district-pavers', paverTex, { rough: 0.92 }),
     grass: texMat('district-grass', grassTex, { rough: 0.97 }),
   }
-  const extensions = useMemo(() => roadExtensions(block.roads), [block])
   const pieces = useMemo(() => {
-    const tiles = groundTiles(block)
+    const tiles = groundTiles(block, bounds)
     const byOrigin = new Map(tiles.map((tile) => [`${tile.rect.x0},${tile.rect.z0}`, tile]))
     return tiles.map(({ rect, height, surface }) => ({
       surface,
@@ -54,12 +41,10 @@ export function Ground({ block }: { block: Block }) {
         high: Math.max(height, edge.next!.height),
       })),
     }))
-  }, [block])
+  }, [block, bounds])
 
   return (
     <>
-      <Box s={[500, 0.12, 500]} p={[0, -0.16, 0]} c="#858566" shadow={false} radius={0.02} />
-      {extensions.map((geometry) => <mesh key={geometry.id} geometry={geometry} material={materials.asphalt} receiveShadow />)}
       {pieces.map(({ surface, geometry, edges }, i) => (
         <group key={i}>
           <mesh geometry={geometry} material={materials[surface]} receiveShadow />
@@ -67,6 +52,9 @@ export function Ground({ block }: { block: Block }) {
             <Box key={`${x},${z}`} s={[w, high - low + 0.008, d]} p={[x, (low + high) / 2, z]} c={low === 0 ? C.CONCRETE_AGED : C.WALL_WHITE} radius={0.018} shadow={false} />
           ))}
         </group>
+      ))}
+      {water?.map(({ x0, x1, z0, z1 }) => (
+        <Box key={`${x0},${z0}`} s={[x1 - x0, 0.08, z1 - z0]} p={[(x0 + x1) / 2, 0.14, (z0 + z1) / 2]} c="#3D7675" rough={0.22} metal={0.24} shadow={false} radius={0.02} />
       ))}
       {block.lanes.map(({ x, z, length, rot }) => (
         <group key={`${x},${z}`} position={[x, 0.012, z]} rotation={[0, rot, 0]}>

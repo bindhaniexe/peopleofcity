@@ -55,7 +55,8 @@ src/
 └── game/                 everything in the city
     ├── Game.tsx          the root: <Canvas> + the HUD
     ├── store.ts          the main game state (useGame)
-    ├── districts/        the district registry and each district's definition
+    ├── city/             connected street layout, boundaries and transit
+    ├── districts/        neighbourhood metadata and original block layouts
     ├── world/            the buildings, streets, props and the building kit
     ├── scene/            sky, light, day and night, post-processing
     ├── characters/       the character styles (roster) and avatar rendering
@@ -72,16 +73,16 @@ public/audio/             sound files (see CREDITS.md)
 
 ## Rendering and the 3D environment
 
-- **The root.** `src/game/Game.tsx` mounts one React Three Fiber `<Canvas>` with the sky (`scene/Sky.tsx`), lighting (`scene/Lighting.tsx`), the current district (`world/DistrictWorld.tsx`), the player, the people, the audio director and post-processing (`scene/Effects.tsx`). The HUD is ordinary React DOM layered over the canvas.
-- **Built in code.** Buildings are not 3D files. They're assembled from a kit of bevelled pieces in `world/kit.tsx` (`Box`, `Win`, `Balcony`, `Sign`, `Awning`, …). Placement data lives in the `layout.ts` files under `districts/saheed-nagar/` and `districts/patia/`. The shared block layout derives ground surfaces and colliders from it.
+- **The root.** `src/game/Game.tsx` mounts one React Three Fiber `<Canvas>` with the sky, lighting, nearby street sections from `world/CityWorld.tsx`, the player, people, audio and post-processing. The HUD is React DOM layered over the canvas.
+- **Built in code.** Buildings are assembled from the bevelled pieces in `world/kit.tsx`. The city layout defines separate residential, commercial and civic profiles, plus custom landmark exteriors. The same layout data defines the ground and colliders.
 - **Draw-call merging.** Thousands of kit pieces would be thousands of draw calls. `world/StaticMerge.tsx` bakes every static mesh into one merged mesh per material per chunk of the map once it mounts.
 - **Light and time.** `scene/time.ts` keeps the city's clock (the real local time, or `?time=HH:MM`). `scene/daylight.ts` turns the hour into a look (sun, sky, fog, window lights), which the lights and materials read every frame.
 - **Post-processing.** Ambient occlusion (N8AO), bloom, ACES filmic tone mapping, SMAA and a vignette, scaled by a quality level per device (`game/device.ts`). Phones get a lighter profile.
 - **Textures.** Asphalt, pavers, grass, shutters, rangoli and every shop sign are drawn on canvases at runtime (`game/textures.ts`), with no image files.
 
-## Districts
+## Connected city
 
-A district is a `DistrictDef` (`districts/active.ts`): its colliders, ground height, walking surfaces (`asphalt`, `pavers`, `grass`, `kota`), landmarks, spawn point, portal, hangout spots and trees. Each district registers itself with `registerDistrict(…)`, and `districts/index.ts` loads them and picks the default. `districts/registry.ts` lists all districts with their names and colours, including Old Town and Unit II, which show as coming soon. Walking into a portal opens `hud/PortalPicker.tsx`, and `hud/Travel.tsx` plays the transition.
+`city/runtime.ts` assembles authored blocks into a shared world with global landmarks, collision, walking surfaces and translated resident slots. The neighbourhood label follows the player’s position. `hud/CityNavigation.tsx` draws the map from the road rectangles and uses the same pathfinder as the ground trail. `city/transit.ts` turns the four bus stops and road waypoints into a ride in either direction.
 
 ## The avatar system
 
@@ -100,9 +101,9 @@ A district is a `DistrictDef` (`districts/active.ts`): its colliders, ground hei
 
 ## The live city
 
-- **Client.** `game/net/client.ts` opens one WebSocket to the room for your district, sends your position 10 times a second (`SEND_HZ`) while it changes, and receives the people near you (`INTEREST_R`, 40 m). Members only: guests never connect.
+- **Client.** `game/net/client.ts` opens one WebSocket to the Bhubaneswar room, sends your position 10 times a second (`SEND_HZ`) while it changes, and receives the people within 40 m. Approved members use the same connection across neighbourhoods.
 - **Wire format.** `shared/net/protocol.ts` is a compact binary format: positions in centimetres, facing in 256 steps. `shared/net/validate.ts` holds the movement rules the server enforces (speed, bounds).
-- **Server.** `realtime/src/room.ts` is one Durable Object per district shard (up to `ROOM_CAP` 150 people), holding positions in memory only and hibernating when idle. `realtime/src/city.ts` assigns shards and counts who's online per district. `realtime/src/auth.ts` checks the Supabase login on the first message.
+- **Server.** `realtime/src/room.ts` is one Durable Object per shard (up to `ROOM_CAP` 150 people) and hibernates when idle. `realtime/src/city.ts` assigns shards and reports city presence. The Worker continues serving the legacy rooms separately during rollout.
 
 ## Backend
 

@@ -1,6 +1,7 @@
 /* Game UI — design.md §10. Bold, tactile, slanted. No glassmorphism, no thin SaaS borders. */
 
 :root {
+  --font-odia: 'Noto Sans Oriya Variable', sans-serif;
   /* game cursors — see below */
   --cur-default:
     url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2240%22%20height%3D%2240%22%20viewBox%3D%220%200%2040%2040%22%3E%3Cg%20transform%3D%22translate%282%202%29%22%3E%3Cpath%20d%3D%22M9.8%2010.4%20L9.8%2030.4%20L15.3%2025.6%20L19.1%2034.4%20L23.2%2032.6%20L19.4%2024.0%20L26.8%2023.6%20Z%22%20fill%3D%22rgba%2812%2C14%2C22%2C0.5%29%22%2F%3E%3Cpath%20d%3D%22M8.0%208.0%20L8.0%2028.0%20L13.5%2023.2%20L17.3%2032.0%20L21.4%2030.2%20L17.6%2021.6%20L25.0%2021.2%20Z%22%20fill%3D%22%23FFF6E5%22%20stroke%3D%22%231C1F2B%22%20stroke-width%3D%222%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E")

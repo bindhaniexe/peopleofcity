@@ -20,6 +20,7 @@ export function HUD() {
   const locked = useGame((s) => s.pointerLocked)
   const talking = useGame((s) => !!s.openId || s.searchOpen || s.paused || s.connectOpen || s.invitesOpen || s.profileOpen)
   const district = useGame((s) => s.district)
+  const navigating = useGame((s) => !!s.cityOverlay || !!s.ride)
   const info = districtInfo(district)
   // The same local clock that drives street lighting.
   const hour = useClock((s) => s.hour)
@@ -47,7 +48,7 @@ export function HUD() {
         <div className="hud-find-row">
           <InvitesHud />
           <ConnectHud />
-          <button className="slant hud-find" onClick={() => useGame.getState().setSearch(true)}>
+          <button className="slant hud-find" disabled={talking || navigating} onClick={() => useGame.getState().setSearch(true)}>
             <span className="unslant">
               <span className="find-glass" /> FIND SOMEONE <span className="keycap">F</span>
             </span>
@@ -58,9 +59,12 @@ export function HUD() {
             {phaseAt(hour) === 'night' ? '☾' : '☀'} {clockText(hour)}
           </span>
         </div>
+        <button className="slant hud-find" disabled={talking || navigating} onClick={() => useGame.getState().setCityOverlay('map')} aria-keyshortcuts="M">
+          <span className="unslant">MAP <span className="keycap">M</span></span>
+        </button>
       </div>
 
-      <div className={`hud-keys${talking ? ' hud-keys--hidden' : ''}`}>
+      <div className={`hud-keys${talking || navigating ? ' hud-keys--hidden' : ''}`}>
         <div className="hud-key">
           <Keycap k="WASD" wide /> MOVE
         </div>
@@ -81,7 +85,7 @@ export function HUD() {
         </div>
       </div>
 
-      {!locked && !talking && (
+      {!locked && !talking && !navigating && (
         <div className="hud-hint slant">
           <span className="unslant">CLICK TO LOOK AROUND</span>
         </div>

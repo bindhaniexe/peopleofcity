@@ -1,9 +1,15 @@
 // LIVE CITY (CLAUDE.md Phase 8A) — numbers shared by the game (src/game/net) and the room server (realtime/).
 // Plain TypeScript only: no `@/` imports, no DOM, no Node — both builds compile this folder.
 
-/** Districts that have rooms (the built ones, src/game/districts/registry.ts). */
+/** Districts used by clients with separate maps. */
 export const ROOM_DISTRICTS = ['saheed-nagar', 'patia'] as const
 export type RoomDistrict = (typeof ROOM_DISTRICTS)[number]
+/** The connected map uses the same room across district boundaries. */
+export const CITY_ROOM = 'bhubaneswar'
+export const ROOM_NAMESPACES = [...ROOM_DISTRICTS, CITY_ROOM] as const
+export type RoomNamespace = (typeof ROOM_NAMESPACES)[number]
+export const isRoomNamespace = (value: string): value is RoomNamespace =>
+  ROOM_NAMESPACES.some((namespace) => namespace === value)
 
 /** Server ticks per second while anyone is moving. */
 export const TICK_HZ = 10
@@ -19,8 +25,11 @@ export const INTEREST_DROP_R = 44
 export const ROOM_CAP = 150
 export const ROOM_HARD_CAP = 160
 
-/** Every district is the same square (src/game/layout.ts). */
+/** Legacy district maps are each 92 m across. */
 export const BOUNDS = 46
+/** Leave headroom within the signed 16-bit centimetre wire coordinates. */
+export const CITY_BOUNDS = 300
+export const roomBounds = (namespace?: RoomNamespace) => namespace === CITY_ROOM ? CITY_BOUNDS : BOUNDS
 
 /** Player speeds, m/s (src/game/player/Player.tsx). */
 export const WALK = 3.0
@@ -70,10 +79,10 @@ export const CLOSE = {
   AWAY: 4008,
 } as const
 
-/** "saheed-nagar#2" — district plus shard number (1-based). */
-export const roomName = (d: RoomDistrict, shard: number) => `${d}#${shard}`
-export function parseRoom(name: string): { district: RoomDistrict; shard: number } | null {
+/** Room namespace plus shard number (1-based), e.g. "bhubaneswar#2". */
+export const roomName = (d: RoomNamespace, shard: number) => `${d}#${shard}`
+export function parseRoom(name: string): { district: RoomNamespace; shard: number } | null {
   const m = /^([a-z-]+)#([1-9]\d{0,2})$/.exec(name)
-  if (!m || !(ROOM_DISTRICTS as readonly string[]).includes(m[1])) return null
-  return { district: m[1] as RoomDistrict, shard: Number(m[2]) }
+  if (!m || !isRoomNamespace(m[1])) return null
+  return { district: m[1], shard: Number(m[2]) }
 }

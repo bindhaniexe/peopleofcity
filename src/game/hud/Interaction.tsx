@@ -9,7 +9,7 @@ import { activeStatus } from '../status'
 import { isTyping } from '../player/input'
 import { ConnectBlock, ConnectFlow } from './Connections'
 import { useNet } from '../net/useNet'
-import { districtInfo, placeLabel, type DistrictId } from '../districts/registry'
+import { placeLabel } from '../districts/registry'
 
 const byId = (id: string | null) => (id ? getPeople().find((p) => p.id === id) : undefined)
 
@@ -23,24 +23,6 @@ function Prompt({ p, onOpen }: { p: Profile; onOpen: () => void }) {
       <span className="unslant prompt-body">
         <span className="prompt-action">
           <span className="keycap">E</span> VIEW PROFILE
-        </span>
-      </span>
-    </button>
-  )
-}
-
-/** Standing at the portal: choose when to travel (never pops up on its own). */
-function PortalPrompt({ onOpen }: { onOpen: () => void }) {
-  return (
-    <button className="prompt prompt--portal slant" onClick={onOpen}>
-      <span className="unslant prompt-body">
-        <span className="prompt-open">
-          <span className="warp-ring" /> PORTAL · <span className="warp-odia" lang="or">ଯାତ୍ରା</span>
-        </span>
-        <span className="prompt-name">TRAVEL</span>
-        <span className="prompt-role">Step through to another district</span>
-        <span className="prompt-action">
-          <span className="keycap">E</span> CHOOSE DESTINATION
         </span>
       </span>
     </button>
@@ -64,19 +46,17 @@ function LinkButton({ label, href, primary }: { label: string; href?: string; pr
 function Presence({ p }: { p: Profile }) {
   const known = useNet((s) => s.cityCounts !== null)
   const here = useNet((s) => s.live.has(p.id))
-  const where = useNet((s) => s.online[p.id] as DistrictId | undefined)
-  const district = useGame((s) => s.district)
+  const online = useNet((s) => !!s.online[p.id])
   if (p.sample || !known) return null
-  if (!here && !where)
+  if (!here && !online)
     return (
       <span className="pp-presence pp-presence--off">
         <span className="pp-presence-dot" /> OFFLINE
       </span>
     )
-  const away = !here && where && where !== district ? districtInfo(where)?.title : null
   return (
     <span className="pp-presence">
-      <span className="pp-presence-dot" /> ONLINE{away ? ` · IN ${away}` : ''}
+      <span className="pp-presence-dot" /> ONLINE
     </span>
   )
 }
@@ -192,18 +172,14 @@ export function Interaction() {
   const openId = useGame((s) => s.openId)
   const openProfile = useGame((s) => s.openProfile)
   const closeProfile = useGame((s) => s.closeProfile)
-  const portalPrompt = useGame(
-    (s) => s.nearPortal && !s.focusId && !s.openId && !s.searchOpen && !s.statusOpen && !s.connectOpen && !s.invitesOpen && !s.profileOpen && !s.paused && !s.portalOpen && !s.travel && s.trackStage !== 'fly' && s.trackStage !== 'hold',
-  )
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const g = useGame.getState()
-      if (g.phase !== 'play' || isTyping(e) || g.searchOpen || g.statusOpen || g.connectOpen || g.invitesOpen || g.profileOpen || g.paused || g.portalOpen || g.travel) return
+      if (g.phase !== 'play' || isTyping(e) || g.searchOpen || g.statusOpen || g.connectOpen || g.invitesOpen || g.profileOpen || g.paused || g.cityOverlay || g.ride) return
       if (e.code === 'KeyE' && !e.repeat) {
         if (g.openId) g.closeProfile()
         else if (g.focusId) g.openProfile(g.focusId)
-        else if (g.nearPortal && g.trackStage !== 'fly' && g.trackStage !== 'hold') g.setPortalOpen(true)
       }
       if (e.code === 'Escape' && g.openId) g.closeProfile()
     }
@@ -217,7 +193,6 @@ export function Interaction() {
   return (
     <>
       {focus && !open && <Prompt p={focus} onOpen={() => openProfile(focus.id)} />}
-      {portalPrompt && <PortalPrompt onOpen={() => useGame.getState().setPortalOpen(true)} />}
       {open && <Panel key={open.id} p={open} onClose={closeProfile} />}
     </>
   )

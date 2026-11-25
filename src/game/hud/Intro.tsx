@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { useProgress } from '@react-three/drei'
 import { useGame } from '../store'
 import { useDirectory } from '../people/directory'
-import { DEFAULT_DISTRICT, districtInfo, homeDistrict } from '../districts/registry'
+import { DEFAULT_DISTRICT, districtInfo, homeArea } from '../districts/registry'
 import { requestLook } from '../player/input'
 import { useAccess } from '../access'
 import { useOnboarding } from '../onboarding'
@@ -34,8 +34,7 @@ export function Intro() {
   const start = () => {
     if (!ready) return
     // signed-in players start in the district they live in
-    if (me) useGame.getState().setDistrict(homeDistrict(me.location))
-    enter()
+    enter(me ? homeArea(me.location) : DEFAULT_DISTRICT)
     requestLook()
   }
 
@@ -81,7 +80,7 @@ export function Intro() {
             </>
           ) : (
             <button className="btn-primary slant" onClick={start} autoFocus>
-              <span className="unslant">{me ? `ENTER ${districtInfo(homeDistrict(me.location)).title} AS ${me.name.split(' ')[0].toUpperCase()} ▸` : `ENTER ${districtInfo(DEFAULT_DISTRICT).title} ▸`}</span>
+              <span className="unslant">{me ? `ENTER ${districtInfo(homeArea(me.location)).title} AS ${me.name.split(' ')[0].toUpperCase()} ▸` : `ENTER ${districtInfo(DEFAULT_DISTRICT).title} ▸`}</span>
             </button>
           )
         ) : (

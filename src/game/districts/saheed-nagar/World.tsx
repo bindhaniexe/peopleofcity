@@ -4,8 +4,7 @@
 import { C } from '@/lib/palette'
 import { BASE } from '../../layout'
 import { Box, Door, Sign, Win } from '../../world/kit'
-import { World } from '../../world/World'
-import { MALL, UNIVERSITY, RUPALI_PORTAL, block } from './layout'
+import { MALL, UNIVERSITY } from './layout'
 
 function BhawaniMall() {
   const w = MALL.x1 - MALL.x0
@@ -25,7 +24,7 @@ function BhawaniMall() {
       })}
       <Box s={[13.4, 3, 0.8]} p={[0, 1.5, d / 2 - 0.46]} c={C.INTERIOR} />
       {[-2.4, 0, 2.4].map((x) => <Win key={x} p={[x, 1.55, d / 2]} w={2.05} h={2.75} shade={false} frame={C.GRILLE} />)}
-      <Box s={[12.4, 0.24, 2.55]} p={[0, 3.36, d / 2 + 0.63]} c="#364959" radius={0.12} />
+      <Box s={[14.2, 0.24, 2.55]} p={[0, 3.36, d / 2 + 0.63]} c="#364959" radius={0.12} />
       <Sign p={[0, 3.72, d / 2 + 1.92]} w={10.8} h={1.08} spec={{ title: 'BMC BHAWANI MALL', odia: 'ବିଏମ୍‌ସି ଭବାନୀ ମଲ୍', bg: '#293A43', fg: '#FFF1D3' }} />
       <Box s={[w - 1, 0.48, d - 1]} p={[0, 13.67, -0.36]} c={C.GRILLE} radius={0.16} />
     </group>
@@ -47,11 +46,11 @@ function RamaDeviFrontage() {
   )
 }
 
-export function SaheedNagarWorld() {
+export function SaheedNagarLandmarks() {
   return (
-    <World block={block} portal={RUPALI_PORTAL} skyline="neighbourhood">
+    <>
       <BhawaniMall />
       <RamaDeviFrontage />
-    </World>
+    </>
   )
 }

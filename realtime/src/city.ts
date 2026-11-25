@@ -1,17 +1,17 @@
 import { DurableObject } from 'cloudflare:workers'
-import { ROOM_CAP, ROOM_DISTRICTS, parseRoom, roomName, type RoomDistrict } from '../../shared/net/config'
+import { CITY_ROOM, ROOM_CAP, ROOM_DISTRICTS, isRoomNamespace, parseRoom, roomName, type RoomNamespace } from '../../shared/net/config'
 import type { Env } from './env'
 
-// The LIVE CITY switchboard (CLAUDE.md Phase 8A): which shard to join, and who is here now in each district.
+// The LIVE CITY switchboard (CLAUDE.md Phase 8A): which shard to join, and who is here now in each map.
 // Rooms report their members (on change, and every minute while anyone is in); a report older than
 // STALE_MS is treated as an empty room, so a room that died can't hold people "online" forever.
 
 type RoomInfo = { uids: string[]; at: number }
 export type CitySnapshot = {
-  counts: Record<RoomDistrict, number>
+  counts: Partial<Record<RoomNamespace, number>>
   /** members per shard, so a client can add its own room's live count to the others */
   rooms: Record<string, number>
-  online: Record<string, RoomDistrict>
+  online: Record<string, RoomNamespace>
 }
 
 const STALE_MS = 150_000
@@ -40,8 +40,8 @@ export class City extends DurableObject<Env> {
   }
 
   /** The shard to join: the one with the person you're heading to (if it has room), else the lowest with room. */
-  async assign(district: string, withUid?: string): Promise<{ room: string } & CitySnapshot> {
-    const d = (ROOM_DISTRICTS as readonly string[]).includes(district) ? (district as RoomDistrict) : ROOM_DISTRICTS[0]
+  async assign(namespace: string, withUid?: string): Promise<{ room: string } & CitySnapshot> {
+    const d = isRoomNamespace(namespace) ? namespace : ROOM_DISTRICTS[0]
     this.prune()
     const load = (name: string) => (this.rooms.get(name)?.uids.length ?? 0) + (this.reserved.get(name)?.length ?? 0)
 
@@ -57,21 +57,22 @@ export class City extends DurableObject<Env> {
     }
     room ??= roomName(d, MAX_SHARDS)
     this.reserved.set(room, [...(this.reserved.get(room) ?? []), Date.now() + RESERVE_MS])
-    return { room, ...this.snapshot() }
+    return { room, ...this.snapshot(d === CITY_ROOM) }
   }
 
-  async read(): Promise<CitySnapshot> {
+  async read(namespace: string | null = null): Promise<CitySnapshot> {
     this.prune()
-    return this.snapshot()
+    return this.snapshot(namespace === CITY_ROOM)
   }
 
-  private snapshot(): CitySnapshot {
-    const counts = Object.fromEntries(ROOM_DISTRICTS.map((d) => [d, 0])) as Record<RoomDistrict, number>
-    const online: Record<string, RoomDistrict> = {}
+  private snapshot(city: boolean): CitySnapshot {
+    const scope: readonly RoomNamespace[] = city ? [CITY_ROOM] : ROOM_DISTRICTS
+    const counts: Record<string, number> = Object.fromEntries(scope.map((d) => [d, 0]))
+    const online: Record<string, RoomNamespace> = {}
     const rooms: Record<string, number> = {}
     for (const [name, r] of this.rooms) {
       const p = parseRoom(name)
-      if (!p) continue
+      if (!p || !scope.includes(p.district)) continue
       counts[p.district] += r.uids.length
       rooms[name] = r.uids.length
       for (const u of r.uids) online[u] = p.district

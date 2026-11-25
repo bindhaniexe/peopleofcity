@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { BOUNDS, RUN, SPEED_TOL } from './config'
+import { BOUNDS, CITY_BOUNDS, CITY_ROOM, RUN, SPEED_TOL, parseRoom, roomBounds, roomName } from './config'
+import { decodeClient, encodePos, Op } from './protocol'
 import { checkMove, firstMove } from './validate'
 
 const start = () => firstMove(0, 0, 0)!
@@ -44,5 +45,26 @@ describe('movement check', () => {
     expect(firstMove(BOUNDS + 1, 0, 0)).toBeNull()
     expect(checkMove(firstMove(BOUNDS - 0.1, 0, 0)!, BOUNDS + 0.5, 0, 100)).toBeNull()
     expect(firstMove(NaN, 0, 0)).toBeNull()
+  })
+
+  it('selects the movement limits for city and legacy room names', () => {
+    expect(parseRoom(roomName(CITY_ROOM, 2))).toEqual({ district: 'bhubaneswar', shard: 2 })
+    expect(roomBounds(CITY_ROOM)).toBe(300)
+    expect(roomBounds('saheed-nagar')).toBe(46)
+    expect(roomBounds('patia')).toBe(46)
+  })
+
+  it('receives city coordinates through the existing wire format and validates them', () => {
+    const pose = { x: CITY_BOUNDS - 0.25, z: -CITY_BOUNDS, yaw: 0, anim: 1 } as const
+    const received = decodeClient(encodePos(pose))
+    expect(received).toEqual({ op: Op.Pos, ...pose })
+
+    const bounds = roomBounds(CITY_ROOM)
+    const state = firstMove(pose.x, pose.z, 0, bounds)!
+    expect(state).not.toBeNull()
+    expect(firstMove(pose.x, pose.z, 0, BOUNDS)).toBeNull()
+    expect(checkMove(state, CITY_BOUNDS, pose.z, 100, bounds)).not.toBeNull()
+    expect(checkMove(state, CITY_BOUNDS + 0.25, pose.z, 100, bounds)).toBeNull()
+    expect(checkMove(state, 250, pose.z, 100, bounds)).toBeNull()
   })
 })

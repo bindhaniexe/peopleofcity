@@ -1,6 +1,5 @@
 'use client'
 
-import './districts' // registers every built district (must load first)
 import * as THREE from 'three'
 import { Suspense, useEffect } from 'react'
 import { Canvas } from '@react-three/fiber'
@@ -8,10 +7,9 @@ import { Lighting } from './scene/Lighting'
 import { daylight } from './scene/time'
 import { Clouds, SkyDome } from './scene/Sky'
 import { Effects } from './scene/Effects'
-import { DistrictWorld } from './world/DistrictWorld'
-import { PortalController } from './world/PortalController'
-import { PortalPicker } from './hud/PortalPicker'
-import { Travel } from './hud/Travel'
+import { CityWorld } from './world/CityWorld'
+import { CityNavigation } from './hud/CityNavigation'
+import { activateConnectedCity } from './city/runtime'
 import { Player } from './player/Player'
 import { People } from './people/People'
 import { requestLook } from './player/input'
@@ -37,6 +35,8 @@ import { isTablet, isTouch, profile, showQualityDebug, useDebugToggles, useQuali
 import { FrameGraph, RenderStats } from './hud/FrameGraph'
 import { PerformanceMonitor } from '@react-three/drei'
 import { TouchControls } from './hud/TouchControls'
+
+activateConnectedCity()
 
 function Ready() {
   const setReady = useGame((s) => s.setReady)
@@ -68,7 +68,7 @@ export default function Game() {
       >
         {/* starting colours of the hour; Lighting keeps them moving with the clock */}
         <color attach="background" args={[daylight.look.fog]} />
-        <fog attach="fog" args={[daylight.look.fog, 85, 430]} />
+        <fog attach="fog" args={[daylight.look.fog, 40, 96]} />
         {/* adaptive quality: step down if this device can't hold ~45fps, back up when it can */}
         {showQualityDebug && <RenderStats />}
         <PerformanceMonitor
@@ -83,8 +83,7 @@ export default function Game() {
           <SkyDome />
           <Clouds />
           <Lighting />
-          <DistrictWorld />
-          <PortalController />
+          <CityWorld />
           <Player />
           <People />
           <Trail />
@@ -99,8 +98,7 @@ export default function Game() {
       <Interaction />
       <Tracker />
       <Search />
-      <PortalPicker />
-      <Travel />
+      <CityNavigation />
       <YouCard />
       <LiveElsewhere />
       <StatusEditor />

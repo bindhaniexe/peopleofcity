@@ -1,6 +1,7 @@
 import { DurableObject } from 'cloudflare:workers'
 import {
   AWAY_MS,
+  BOUNDS,
   CLOSE,
   FLOOD_S,
   HELLO_TIMEOUT_MS,
@@ -12,6 +13,8 @@ import {
   MAX_MSG_BYTES,
   ROOM_HARD_CAP,
   TICK_MS,
+  parseRoom,
+  roomBounds,
 } from '../../shared/net/config'
 import {
   Op,
@@ -31,7 +34,7 @@ import { checkMove, firstMove, type MoveState } from '../../shared/net/validate'
 import { member } from './auth'
 import { cityOf, type Env } from './env'
 
-// One district shard of the LIVE CITY (CLAUDE.md Phase 8A). Approved members only. Holds who is here and
+// One map shard of the LIVE CITY (CLAUDE.md Phase 8A). Approved members only. Holds who is here and
 // where, in memory only.
 // Sockets use the Hibernation API: an idle room sleeps (no cost) with everyone still connected. The tick runs
 // only while someone is moving, and each player gets one message per tick with the people near them.
@@ -77,6 +80,7 @@ function send(ws: WebSocket, data: ArrayBuffer) {
 
 export class Room extends DurableObject<Env> {
   private name = ''
+  private bounds = BOUNDS
   private seats = new Map<WebSocket, Seat>()
   /** what each recipient was last sent about each slot */
   private seen = new Map<WebSocket, Map<number, number>>()
@@ -93,13 +97,18 @@ export class Room extends DurableObject<Env> {
       const s = ws.deserializeAttachment() as Seat | null
       if (!s) continue
       this.seats.set(ws, s)
-      this.name ||= s.room
+      if (!this.name) this.setName(s.room)
     }
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping', 'pong'))
   }
 
+  private setName(name: string) {
+    this.name = name
+    this.bounds = roomBounds(parseRoom(name)?.district)
+  }
+
   async fetch(req: Request): Promise<Response> {
-    this.name ||= req.headers.get('x-room') ?? ''
+    if (!this.name) this.setName(req.headers.get('x-room') ?? '')
     if (req.headers.get('Upgrade') !== 'websocket') return new Response('expected websocket', { status: 426 })
     if (this.seats.size >= MAX_SOCKETS) return new Response('room full', { status: 503 })
 
@@ -138,7 +147,7 @@ export class Room extends DurableObject<Env> {
     if (!seat.hello) return
 
     const now = Date.now()
-    const next = seat.move ? checkMove(seat.move, m.x, m.z, now) : firstMove(m.x, m.z, now)
+    const next = seat.move ? checkMove(seat.move, m.x, m.z, now, this.bounds) : firstMove(m.x, m.z, now, this.bounds)
     if (!next) {
       if (seat.move) send(ws, encodeCorrect(seat.move.x, seat.move.z))
       return

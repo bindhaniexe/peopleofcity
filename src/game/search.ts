@@ -1,5 +1,5 @@
 import { getCharacter } from './characters/roster'
-import { active } from './districts/active'
+import { cityLabelAt } from './city/runtime'
 import type { Profile } from './people/profiles'
 import { getPeople } from './people/directory'
 
@@ -30,9 +30,7 @@ export function inCategory(p: Profile, c: Category) {
 }
 
 /** Where someone is right now, as the city knows it. */
-export function whereIs(x: number, z: number) {
-  return active.def.landmarks.find((l) => Math.hypot(l.x - x, l.z - z) < l.r)?.label ?? active.def.area
-}
+export const whereIs = cityLabelAt
 
 export type Result = { p: Profile; score: number }
 

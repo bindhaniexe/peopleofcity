@@ -2,8 +2,8 @@ import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 import { DEFAULT_CHARACTER, genderOf, type Gender } from './characters/roster'
 import { refreshDirectory, useDirectory } from './people/directory'
-import { getDistrict } from './districts/active'
-import { DEFAULT_DISTRICT, districtInfo, homeDistrict, placeName } from './districts/registry'
+import { citySpots } from './city/runtime'
+import { DEFAULT_DISTRICT, districtInfo, placeName } from './districts/registry'
 import { APPLICATIONS_FREE } from '@/lib/apply'
 
 // "Become visible" — character-creation style onboarding (CLAUDE.md §1).
@@ -253,7 +253,7 @@ export function payload(d: Draft) {
 
 /** Where you stand in your neighbourhood: your spot if it's there, otherwise a random one (people spread out). */
 export function spotIn(location: string, spot: string) {
-  const ids = Object.keys(getDistrict(homeDistrict(location)).spots)
+  const ids = Object.keys(citySpots(location))
   return ids.includes(spot) ? spot : ids[Math.floor(Math.random() * ids.length)]
 }
 

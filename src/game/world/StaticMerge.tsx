@@ -46,7 +46,7 @@ function surfaceMaterial(key: string, like: THREE.MeshStandardMaterial) {
 // Dev-only: every kit piece's bounds before merging, for finding coplanar faces that z-fight.
 type Piece = { box: THREE.Box3; mat: string; color: string; aligned: boolean; type: string; normal?: number[]; tris: number }
 const debugPieces: Piece[] | null =
-  process.env.NODE_ENV !== 'production' && typeof window !== 'undefined'
+  process.env.NODE_ENV !== 'production' && typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')
     ? (((window as unknown as { __dobPieces?: Piece[] }).__dobPieces = []) as Piece[])
     : null
 

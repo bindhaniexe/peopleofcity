@@ -1,5 +1,6 @@
 import type { AABB } from '../layout'
 import type { DistrictId } from './registry'
+import type { Rect } from './blocks'
 
 // The currently loaded district. Collision, routing, footsteps, landmarks and
 // people all read from here, so only one district exists at a time.
@@ -9,7 +10,9 @@ export type Pose = { x: number; z: number; face: number }
 export type Spot = { label: string; blurb: string; slots: [number, number, number][] }
 
 export type DistrictDef = {
-  id: DistrictId
+  id: DistrictId | 'bhubaneswar'
+  bounds?: Rect
+  contains?: (x: number, z: number) => boolean
   colliders: AABB[]
   ground: (x: number, z: number) => number
   surface: (x: number, z: number) => Surface
@@ -34,16 +37,16 @@ export type DistrictDef = {
   orbit: [number, number, number]
 }
 
-const registry = new Map<DistrictId, DistrictDef>()
+const registry = new Map<DistrictDef['id'], DistrictDef>()
 export const registerDistrict = (d: DistrictDef) => registry.set(d.id, d)
-export const getDistrict = (id: DistrictId) => registry.get(id)!
+export const getDistrict = (id: DistrictDef['id']) => registry.get(id)!
 
 export const active = { def: null as unknown as DistrictDef }
 
 const listeners = new Set<(d: DistrictDef) => void>()
 export const onDistrictChange = (fn: (d: DistrictDef) => void) => (listeners.add(fn), () => listeners.delete(fn))
 
-export function activateDistrict(id: DistrictId) {
+export function activateDistrict(id: DistrictDef['id']) {
   const d = registry.get(id)
   if (!d || active.def === d) return
   active.def = d

@@ -1,34 +1,44 @@
-import { BOUNDS } from './layout'
 import { active } from './districts/active'
+import { districtRect } from './districts/blocks'
 
-// Walkability grid + A* over the district, for "take me to them".
+// Walkability grid + A* for both landmark directions and finding people.
 
 const CELL = 0.75
-const HALF = BOUNDS
-const N = Math.ceil((HALF * 2) / CELL)
 const INFLATE = 0.45
 
-const grids = new Map<string, Uint8Array>()
+type Grid = { cells: Uint8Array; width: number; height: number; x0: number; z0: number }
+const grids = new WeakMap<typeof active.def, Grid>()
 
-function build() {
-  const g = new Uint8Array(N * N)
-  for (const b of active.def.colliders) {
-    if (b.min[1] > 1.6 || b.max[1] < 0.3) continue
-    const i0 = Math.max(0, cell(b.min[0] - INFLATE))
-    const i1 = Math.min(N - 1, cell(b.max[0] + INFLATE))
-    const j0 = Math.max(0, cell(b.min[2] - INFLATE))
-    const j1 = Math.min(N - 1, cell(b.max[2] + INFLATE))
-    for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) g[j * N + i] = 1
+function build(): Grid {
+  const world = active.def
+  const { x0, x1, z0, z1 } = world.bounds ?? districtRect
+  const width = Math.ceil((x1 - x0) / CELL)
+  const height = Math.ceil((z1 - z0) / CELL)
+  const cells = new Uint8Array(width * height)
+  if (world.contains) {
+    for (let j = 0; j < height; j++) {
+      for (let i = 0; i < width; i++) {
+        if (!world.contains(center(i, x0), center(j, z0))) cells[j * width + i] = 1
+      }
+    }
   }
-  return g
+  for (const b of world.colliders) {
+    if (b.min[1] > 1.6 || b.max[1] < 0.3) continue
+    const i0 = Math.max(0, cell(b.min[0] - INFLATE, x0))
+    const i1 = Math.min(width - 1, cell(b.max[0] + INFLATE, x0))
+    const j0 = Math.max(0, cell(b.min[2] - INFLATE, z0))
+    const j1 = Math.min(height - 1, cell(b.max[2] + INFLATE, z0))
+    for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) cells[j * width + i] = 1
+  }
+  return { cells, width, height, x0, z0 }
 }
 
-const cell = (v: number) => Math.floor((v + HALF) / CELL)
-const center = (i: number) => -HALF + (i + 0.5) * CELL
-const inside = (i: number, j: number) => i >= 0 && j >= 0 && i < N && j < N
-const free = (g: Uint8Array, i: number, j: number) => inside(i, j) && g[j * N + i] === 0
+const cell = (v: number, origin: number) => Math.floor((v - origin) / CELL)
+const center = (i: number, origin: number) => origin + (i + 0.5) * CELL
+const free = (g: Grid, i: number, j: number) =>
+  i >= 0 && j >= 0 && i < g.width && j < g.height && g.cells[j * g.width + i] === 0
 
-function nearestFree(g: Uint8Array, i: number, j: number): [number, number] | null {
+function nearestFree(g: Grid, i: number, j: number): [number, number] | null {
   if (free(g, i, j)) return [i, j]
   for (let r = 1; r < 8; r++)
     for (let dj = -r; dj <= r; dj++)
@@ -39,29 +49,35 @@ function nearestFree(g: Uint8Array, i: number, j: number): [number, number] | nu
   return null
 }
 
-function lineOfSight(g: Uint8Array, ax: number, az: number, bx: number, bz: number) {
+function lineOfSight(g: Grid, ax: number, az: number, bx: number, bz: number) {
   const d = Math.hypot(bx - ax, bz - az)
   const steps = Math.ceil(d / (CELL * 0.4))
   for (let k = 1; k < steps; k++) {
     const t = k / steps
-    if (!free(g, cell(ax + (bx - ax) * t), cell(az + (bz - az) * t))) return false
+    if (!free(g, cell(ax + (bx - ax) * t, g.x0), cell(az + (bz - az) * t, g.z0))) return false
   }
   return true
 }
 
 /** Grid A* (8-way, no corner cutting) + line-of-sight smoothing. Returns world XZ waypoints. */
 export function findPath(fx: number, fz: number, tx: number, tz: number): [number, number][] | null {
-  let g = grids.get(active.def.id)
-  if (!g) grids.set(active.def.id, (g = build()))
-  const s = nearestFree(g, cell(fx), cell(fz))
-  const e = nearestFree(g, cell(tx), cell(tz))
+  let g = grids.get(active.def)
+  if (!g) grids.set(active.def, (g = build()))
+  const N = g.width
+  const si = cell(fx, g.x0)
+  const sj = cell(fz, g.z0)
+  const ei = cell(tx, g.x0)
+  const ej = cell(tz, g.z0)
+  if (free(g, si, sj) && free(g, ei, ej) && lineOfSight(g, fx, fz, tx, tz)) return [[fx, fz], [tx, tz]]
+  const s = nearestFree(g, si, sj)
+  const e = nearestFree(g, ei, ej)
   if (!s || !e) return null
   const start = s[1] * N + s[0]
   const goal = e[1] * N + e[0]
 
-  const gScore = new Float32Array(N * N).fill(Infinity)
-  const came = new Int32Array(N * N).fill(-1)
-  const closed = new Uint8Array(N * N)
+  const gScore = new Float64Array(g.cells.length).fill(Infinity)
+  const came = new Int32Array(g.cells.length).fill(-1)
+  const closed = new Uint8Array(g.cells.length)
   const heap: [number, number][] = [] // [f, idx]
   const push = (f: number, idx: number) => {
     heap.push([f, idx])
@@ -126,9 +142,10 @@ export function findPath(fx: number, fz: number, tx: number, tz: number): [numbe
   if (came[goal] === -1 && goal !== start) return null
 
   const raw: [number, number][] = []
-  for (let c = goal; c !== -1; c = came[c]) raw.push([center(c % N), center(Math.floor(c / N))])
+  for (let c = goal; c !== -1; c = came[c]) raw.push([center(c % N, g.x0), center(Math.floor(c / N), g.z0)])
   raw.reverse()
   raw[0] = [fx, fz]
+  if (free(g, ei, ej)) raw.push([tx, tz])
 
   // string-pull: keep only the corners we actually need
   const out: [number, number][] = [raw[0]]

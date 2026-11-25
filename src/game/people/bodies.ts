@@ -11,8 +11,7 @@ export const player = { pos: null as THREE.Vector3 | null, facing: 0, anim: 'idl
 const BODY_R = 0.35
 
 export function resolveBodies(pos: THREE.Vector3, r: number) {
-  for (const [id, b] of bodies) {
-    if (id === 'portal') continue // a travel target, not a person
+  for (const b of bodies.values()) {
     const dx = pos.x - b.x
     const dz = pos.z - b.z
     const min = r + BODY_R

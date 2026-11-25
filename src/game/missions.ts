@@ -6,7 +6,7 @@ export type MissionId = 'note' | 'reach' | 'cross' | 'invite'
 export const MISSIONS: { id: MissionId; title: string; hint: string; bonus?: boolean }[] = [
   { id: 'note', title: 'PUT YOUR NOTE UP', hint: 'Tell the street what you’re here for.' },
   { id: 'reach', title: 'OFF THE USUAL PATH', hint: 'Walk up to someone whose note you like and say hi.' },
-  { id: 'cross', title: 'CROSS OVER', hint: 'Take the portal to another district.' },
+  { id: 'cross', title: 'CROSS OVER', hint: 'Walk or take the bus into another neighbourhood.' },
   { id: 'invite', title: 'PASS IT ON', hint: 'Share one of your invite codes.', bonus: true },
 ]
 

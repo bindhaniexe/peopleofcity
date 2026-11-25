@@ -106,9 +106,10 @@ if (typeof window !== 'undefined') {
     useMyStatus.subscribe(check)
     useConnect.subscribe((s, p) => s.items !== p.items && check())
     useInvites.subscribe((s, p) => s.slots !== p.slots && check())
-    // through the portal: counts once you're out the other side
     useGame.subscribe((s, p) => {
-      if (s.travel?.stage === 'reveal' && p.travel?.stage !== 'reveal') useMissions.getState().complete('cross')
+      if (s.phase === 'play' && p.phase === 'play' && s.district !== p.district && s.district !== s.entryArea) {
+        useMissions.getState().complete('cross')
+      }
     })
   }
 }

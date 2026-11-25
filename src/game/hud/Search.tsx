@@ -11,7 +11,7 @@ import { CATEGORIES, searchPeople, whereIs, type Category } from '../search'
 import { useGame } from '../store'
 import { activeStatus } from '../status'
 import { isTouch } from '../device'
-import { districtForSearch, districtInfo } from '../districts/registry'
+import { districtInfo, homeArea } from '../districts/registry'
 import { useNet } from '../net/useNet'
 
 const EXAMPLES = ['design engineer', 'open to work', 'Rupali Square', 'design systems', 'founder']
@@ -69,7 +69,7 @@ export function Search() {
     const onKey = (e: KeyboardEvent) => {
       const g = useGame.getState()
       if (g.phase !== 'play') return
-      if (!g.searchOpen && !g.statusOpen && !g.connectOpen && !g.invitesOpen && !g.profileOpen && !g.openId && !g.paused && e.code === 'KeyF' && !isTyping(e)) {
+      if (!g.searchOpen && !g.statusOpen && !g.connectOpen && !g.invitesOpen && !g.profileOpen && !g.openId && !g.paused && !g.cityOverlay && !g.ride && e.code === 'KeyF' && !isTyping(e)) {
         e.preventDefault()
         setSearch(true)
       } else if (g.searchOpen && e.code === 'Escape') setSearch(false)
@@ -106,16 +106,13 @@ export function Search() {
 
   if (phase !== 'play' || !open) return null
 
-  // someone in another district → walk to the portal, go through, then find them
   const choose = (id: string) => {
     const person = people.find((x) => x.id === id)
-    const g = useGame.getState()
-    if (!person || bodies.has(id)) return track(id)
-    const there = districtForSearch(person.location, useNet.getState().online[id])
-    if (there === g.district) return track(id)
-    g.setSearch(false)
-    g.setPortalFor({ id, district: there })
-    track('portal')
+    if (!person) return
+    const target = bodies.get(id)
+    const me = player.pos
+    if (!target && online[id]) useGame.getState().showToast('Heading to their usual spot')
+    track(id, !!(me && target && Math.hypot(target.x - me.x, target.z - me.z) < 45))
   }
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
@@ -228,9 +225,9 @@ export function Search() {
                   </span>
                   <span className="find-where">
                     <span className="find-place">
-                      {pos ? whereIs(pos.x, pos.z) : `IN ${districtInfo(districtForSearch(p.location, online[p.id])).title}`}
+                      {pos ? whereIs(pos.x, pos.z) : districtInfo(homeArea(p.location)).title}
                     </span>
-                    {!pos && <span className="find-dir">VIA THE PORTAL</span>}
+                    {!pos && <span className="find-dir">USUAL SPOT</span>}
                     {pos && Number.isFinite(dist) && (
                       <span className="find-dir">
                         <b>{Math.round(dist)}m</b> · {direction(pos.x, pos.z, dist)}

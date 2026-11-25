@@ -55,8 +55,8 @@ export function AudioDirector() {
     const unsub = useGame.subscribe((s, p) => {
       if (s.phase !== p.phase) syncMusic()
       if (s.phase === 'create' && p.phase !== 'create') sfx.step(0)
-      const busy = s.paused || s.searchOpen || !!s.openId || s.phase === 'create' || s.portalOpen || s.connectOpen || s.invitesOpen || s.profileOpen
-      const wasBusy = p.paused || p.searchOpen || !!p.openId || p.phase === 'create' || p.portalOpen || p.connectOpen || p.invitesOpen || p.profileOpen
+      const busy = s.paused || s.searchOpen || !!s.openId || s.phase === 'create' || !!s.cityOverlay || s.connectOpen || s.invitesOpen || s.profileOpen
+      const wasBusy = p.paused || p.searchOpen || !!p.openId || p.phase === 'create' || !!p.cityOverlay || p.connectOpen || p.invitesOpen || p.profileOpen
       if (busy !== wasBusy) setMuffle(busy ? (s.paused ? 0.85 : 0.55) : 0)
 
       if (s.focusId && s.focusId !== p.focusId && !s.openId) sfx.prompt()
@@ -72,9 +72,8 @@ export function AudioDirector() {
       if (s.paused && !p.paused) sfx.pauseOpen()
       if (!s.paused && p.paused) sfx.pauseClose()
       if (s.trackStage === 'fly' && p.trackStage !== 'fly') sfx.locate()
-      if (s.portalOpen && !p.portalOpen) sfx.portalOpen()
-      if (s.travel?.stage === 'cover' && p.travel?.stage !== 'cover') sfx.warp()
-      if (s.travel?.stage === 'card' && p.travel?.stage !== 'card') sfx.arrive()
+      if (s.cityOverlay && !p.cityOverlay) sfx.scanOpen()
+      if (!s.ride && p.ride) sfx.arrive()
       if (s.trackStage === 'found' && p.trackStage !== 'found') sfx.found()
       if (s.toast && s.toast !== p.toast) (s.toast.msg.includes('VISIBLE') && s.toast.tone === 'good' ? sfx.goLive() : sfx.toast(s.toast.tone))
       if (s.landmark !== p.landmark && s.phase === 'play' && s.landmark !== active.def.area) sfx.landmark()
@@ -140,7 +139,7 @@ export function AudioDirector() {
         if (e.key.length === 1 || e.key === 'Backspace') sfx.typing()
         return
       }
-      if (e.code === 'KeyM') useAudio.getState().set({ muted: !useAudio.getState().muted })
+      if (e.code === 'KeyU' && !e.repeat) useAudio.getState().set({ muted: !useAudio.getState().muted })
     }
     const errorWatch = new MutationObserver((muts) => {
       for (const m of muts) for (const n of m.addedNodes) if ((n as Element).classList?.contains('cr-error')) sfx.error()

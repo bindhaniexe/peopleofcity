@@ -4,9 +4,12 @@ import * as THREE from 'three'
 import { Suspense, useEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import { Html } from '@react-three/drei'
-import { BOUNDS } from '../layout'
 import { RUN, WALK } from '@shared/net/config'
 import { active } from '../districts/active'
+import { CITY_BUS_STOPS, CITY_PLACES } from '../city/layout'
+import { cityAreaAt, cityLabelAt, citySpawn } from '../city/runtime'
+import { boardFrom, ridePose, type BusTrip } from '../city/transit'
+import { walkingDirections } from '../city/walkingDirections'
 import { useGame } from '../store'
 import { Avatar, type AvatarState } from '../characters/Avatar'
 import { camRef, installInput, keys, look, stick } from './input'
@@ -14,15 +17,16 @@ import { rayDistance, resolveCircle } from './collision'
 import { bodies, player, resolveBodies } from '../people/bodies'
 import { findPath } from '../nav'
 import { route } from '../tracking'
-import { useDirectory } from '../people/directory'
+import { getPeople, useDirectory } from '../people/directory'
 import { stepsFor, useOnboarding } from '../onboarding'
 import { useAccess } from '../access'
 import { DraftPlate } from '../hud/DraftPlate'
 import { MyStatusBubble } from '../hud/MyStatusBubble'
 import { footstep } from '../audio/footsteps'
+import { BusVehicle } from '../world/BusVehicle'
+import { useNet } from '../net/useNet'
 
 const RADIUS = 0.38
-const spawnOf = () => new THREE.Vector3(active.def.spawn.x, 0, active.def.spawn.z)
 const TALK_RANGE = 2.7
 const ARRIVE = 2.3
 const FLY = 2.4 // seconds: camera arcs over the city to them
@@ -46,6 +50,7 @@ export function Player() {
     camRef.current = camera
   }, [camera])
   const phase = useGame((s) => s.phase)
+  const riding = useGame((s) => !!s.ride)
   const me = useDirectory((s) => s.me)
   const draftCharacter = useOnboarding((s) => s.draft.character)
   const step = useOnboarding((s) => s.step)
@@ -60,8 +65,8 @@ export function Player() {
   const avatar = useRef<AvatarState>({ mode: 'idle', speed: 0, waveUntil: 0 })
 
   const st = useRef({
-    pos: spawnOf(),
-    district: '',
+    pos: new THREE.Vector3(active.def.spawn.x, 0, active.def.spawn.z),
+    entryArea: '',
     vel: new THREE.Vector3(),
     facing: Math.PI,
     camPos: new THREE.Vector3(),
@@ -71,6 +76,11 @@ export function Player() {
     phase: '' as string,
     manual: false,
     repathT: 0,
+    mapTarget: null as string | null,
+    routeFrom: new THREE.Vector2(Infinity, Infinity),
+    ride: null as BusTrip | null,
+    boardTrip: null as BusTrip | null,
+    rideDistance: 0,
     lookAt: new THREE.Vector3(6, 3, -4),
     landmarkT: 0,
     initialised: false,
@@ -121,15 +131,17 @@ export function Player() {
     const s = st.current
     const game = useGame.getState()
     const talking = game.openId ? bodies.get(game.openId) : undefined
-    const tracking = game.trackId ? bodies.get(game.trackId) : undefined
+    const liveTarget = game.trackId ? bodies.get(game.trackId) : undefined
+    const usualSpot = game.trackId && !liveTarget ? getPeople().find((p) => p.id === game.trackId)?.spot : undefined
+    const tracking = liveTarget ?? (usualSpot ? { ...usualSpot, y: active.def.ground(usualSpot.x, usualSpot.z) } : undefined)
     const stage = tracking ? game.trackStage : null
     const cinematic = stage === 'fly' || stage === 'hold'
-    const play = game.phase === 'play' && !talking && !game.searchOpen && !game.paused && !cinematic && !game.portalOpen && !game.travel
+    const elsewhere = useNet.getState().status === 'replaced'
+    const play = game.phase === 'play' && !talking && !game.searchOpen && !game.paused && !cinematic && !game.cityOverlay && !game.ride && !elsewhere
     const select = game.phase === 'create'
-    if (game.district !== s.district) {
-      // arrived in a district: step out of its portal (or start at its spawn)
-      const first = s.district === ''
-      const p = first ? active.def.spawn : active.def.arrival
+    if (game.entryArea !== s.entryArea) {
+      const p = citySpawn(game.entryArea)
+      const first = s.entryArea === ''
       s.pos.set(p.x, active.def.ground(p.x, p.z), p.z)
       s.vel.set(0, 0, 0)
       s.facing = p.face
@@ -140,14 +152,11 @@ export function Player() {
         s.lookAt.set(p.x, 1.5, p.z)
       }
       route.path = []
-      s.district = game.district
+      s.entryArea = game.entryArea
+      game.setArea(game.entryArea)
     }
     if (game.phase !== s.phase) {
-      // character creation always happens on the home street, facing the camera
-      if (select) {
-        s.pos.copy(spawnOf())
-        s.vel.set(0, 0, 0)
-      }
+      if (select) s.vel.set(0, 0, 0)
       s.phase = game.phase
     }
     const stageT = (performance.now() - game.trackT0) / 1000
@@ -205,7 +214,24 @@ export function Player() {
           look.yaw = dampAngle(look.yaw, Math.atan2(-v.wish.x, -v.wish.z), 2.2, dt)
         }
       }
-    } else if (stage !== 'walk' && route.path.length) route.path = []
+    } else if (game.mapTarget) {
+      const destination = CITY_PLACES.find(({ id }) => id === game.mapTarget)
+      if (destination) {
+        const [x, z] = destination.point
+        if (Math.hypot(x - s.pos.x, z - s.pos.z) < ARRIVE) {
+          game.setMapTarget(null)
+          game.showToast(`Arrived at ${destination.label}`)
+          route.path = []
+        } else if (s.mapTarget !== destination.id || Math.hypot(s.routeFrom.x - s.pos.x, s.routeFrom.y - s.pos.z) > 2) {
+          route.path = walkingDirections([s.pos.x, s.pos.z], [x, z]) ?? []
+          s.routeFrom.set(s.pos.x, s.pos.z)
+        }
+        s.mapTarget = destination.id
+      }
+    } else {
+      s.mapTarget = null
+      route.path = []
+    }
     if (stage === 'found' && stageT > 2.2) game.stopTracking()
 
     const moving = v.wish.lengthSq() > 0
@@ -214,11 +240,41 @@ export function Player() {
     if (moving) v.wish.normalize()
     v.target.copy(v.wish).multiplyScalar((running ? RUN : WALK) * analog)
     s.vel.lerp(v.target, 1 - Math.exp(-(moving ? 9 : 12) * dt))
-    s.pos.addScaledVector(s.vel, dt)
-    resolveBodies(s.pos, RADIUS)
-    resolveCircle(s.pos, RADIUS)
-    s.pos.x = THREE.MathUtils.clamp(s.pos.x, -BOUNDS, BOUNDS)
-    s.pos.z = THREE.MathUtils.clamp(s.pos.z, -BOUNDS, BOUNDS)
+    if (game.ride !== s.ride) {
+      s.ride = game.ride
+      s.boardTrip = game.ride ? boardFrom(game.ride, [s.pos.x, s.pos.z]) : null
+      s.rideDistance = 0
+    }
+    if (s.boardTrip) {
+      s.vel.set(0, 0, 0)
+      if (!game.paused && !elsewhere && !document.hidden) {
+        // The authored path needs no physics substeps. Keep rides moving at low frame rates.
+        const tripStep = Math.min(rawDt, 0.2)
+        s.rideDistance = Math.min(s.boardTrip.length, s.rideDistance + RUN * tripStep)
+        const { point: [x, z], facing } = ridePose(s.boardTrip, s.rideDistance)
+        s.pos.x = x
+        s.pos.z = z
+        s.facing = dampAngle(s.facing, facing, 5, dt)
+        if (s.rideDistance >= s.boardTrip.length) {
+          look.yaw = facing + Math.PI
+          game.finishRide()
+          game.showToast(`Arrived at ${s.boardTrip.destination.label}`)
+        }
+      }
+    } else {
+      const x = s.pos.x
+      const z = s.pos.z
+      s.pos.addScaledVector(s.vel, dt)
+      resolveBodies(s.pos, RADIUS)
+      resolveCircle(s.pos, RADIUS)
+      const inside = active.def.contains
+      if (inside && !inside(s.pos.x, s.pos.z)) {
+        const keepX = inside(s.pos.x, z)
+        const keepZ = inside(x, s.pos.z)
+        if (!keepX || keepZ) s.pos.x = x
+        if (!keepZ) s.pos.z = z
+      }
+    }
     s.pos.y = damp(s.pos.y, active.def.ground(s.pos.x, s.pos.z), 20, dt)
 
     const speed = Math.hypot(s.vel.x, s.vel.z)
@@ -238,7 +294,14 @@ export function Player() {
 
     // --- camera ----------------------------------------------------------
     const t = state.clock.elapsedTime
-    if (cinematic && tracking) {
+    if (game.ride) {
+      v.goal.set(s.pos.x - Math.sin(s.facing) * 6.8 + Math.cos(s.facing) * 2.8, s.pos.y + 3.5, s.pos.z - Math.cos(s.facing) * 6.8 - Math.sin(s.facing) * 2.8)
+      v.head.set(s.pos.x + Math.sin(s.facing) * 4, s.pos.y + 1.7, s.pos.z + Math.cos(s.facing) * 4)
+      s.camPos.lerp(v.goal, 1 - Math.exp(-6 * dt))
+      s.lookAt.lerp(v.head, 1 - Math.exp(-8 * dt))
+      camera.fov = damp(camera.fov, 57, 4, dt)
+      camera.updateProjectionMatrix()
+    } else if (cinematic && tracking) {
       // the locate shot: lift off, arc over the rooftops, land on them
       v.face.set(tracking.x - s.pos.x, 0, tracking.z - s.pos.z)
       const dist = v.face.length()
@@ -335,7 +398,6 @@ export function Player() {
       const fx = Math.sin(s.facing)
       const fz = Math.cos(s.facing)
       for (const [id, b] of bodies) {
-        if (id === 'portal') continue
         const dx = b.x - s.pos.x
         const dz = b.z - s.pos.z
         const d = Math.hypot(dx, dz)
@@ -353,13 +415,19 @@ export function Player() {
     s.landmarkT -= dt
     if (s.landmarkT <= 0) {
       s.landmarkT = 0.3
-      const lm = active.def.landmarks.find((l) => Math.hypot(l.x - s.pos.x, l.z - s.pos.z) < l.r)?.label ?? active.def.area
+      const area = cityAreaAt(s.pos.x, s.pos.z)
+      if (area && area !== game.district) game.setArea(area)
+      const lm = cityLabelAt(s.pos.x, s.pos.z)
       if (lm !== game.landmark) game.setLandmark(lm)
+      const stop = !game.ride ? CITY_BUS_STOPS.find(({ point: [x, z] }) => Math.hypot(x - s.pos.x, z - s.pos.z) < 2.6)?.id ?? null : null
+      if (stop !== game.nearbyStop) useGame.setState({ nearbyStop: stop })
     }
   })
 
   return (
     <group ref={root}>
+      {riding && <BusVehicle />}
+      <group visible={!riding}>
       <Suspense fallback={null}>
         <Avatar
           key={characterId}
@@ -371,12 +439,13 @@ export function Player() {
           }}
         />
       </Suspense>
+      </group>
       {phase === 'create' && (
         <Html position={[0, 2.2, 0]} center zIndexRange={[20, 0]} wrapperClass="np-wrap">
           <DraftPlate />
         </Html>
       )}
-      {phase === 'play' && (
+      {phase === 'play' && !riding && (
         <Html position={[0, 2.25, 0]} center zIndexRange={[20, 0]} wrapperClass="np-wrap">
           <MyStatusBubble />
         </Html>

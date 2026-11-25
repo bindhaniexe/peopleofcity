@@ -2,8 +2,8 @@ import { create } from 'zustand'
 import { supabase, type ProfileRow } from '@/lib/supabase'
 import { samplePeople, type Profile } from './profiles'
 import type { Status } from '../status'
-import { getDistrict } from '../districts/active'
-import { homeDistrict } from '../districts/registry'
+import { cityPose, citySpots } from '../city/runtime'
+import { homeArea } from '../districts/registry'
 
 // Who lives in the district: real approved profiles from Supabase + the
 // sample cast (retired automatically once the real community is big enough).
@@ -49,18 +49,17 @@ export function rowStatus(r: ProfileRow): Status | undefined {
 
 /** Deterministic placement: everyone at a spot gets the next free slot, oldest first; overflow fans out around it. */
 function place(rows: ProfileRow[]) {
-  const bySpot = new Map<string, ProfileRow[]>()
+  const bySpot = new Map<string, { slots: [number, number, number][]; list: ProfileRow[] }>()
   for (const r of [...rows].sort((a, b) => a.created_at.localeCompare(b.created_at))) {
-    // spots belong to the district the person appears in; unknown → that district's first spot
-    const spots = getDistrict(homeDistrict(r.location)).spots
+    const spots = citySpots(r.location)
     const id = Object.hasOwn(spots, r.spot) ? r.spot : Object.keys(spots)[0]
-    const key = `${homeDistrict(r.location)}|${id}`
-    bySpot.set(key, [...(bySpot.get(key) ?? []), r])
+    const key = `${homeArea(r.location)}|${id}`
+    const group = bySpot.get(key) ?? { slots: spots[id].slots, list: [] }
+    group.list.push(r)
+    bySpot.set(key, group)
   }
   const out = new Map<string, [number, number, number]>()
-  for (const [key, list] of bySpot) {
-    const [district, id] = key.split('|')
-    const slots = getDistrict(district as Parameters<typeof getDistrict>[0]).spots[id].slots
+  for (const { slots, list } of bySpot.values()) {
     list.forEach((r, i) => {
       if (i < slots.length) return out.set(r.id, slots[i])
       const [x, z, f] = slots[i % slots.length]
@@ -72,12 +71,16 @@ function place(rows: ProfileRow[]) {
 }
 
 let samplesVisible = true
+const citySamples = samplePeople().map((profile) => ({
+  ...profile,
+  spot: profile.spot && cityPose(homeArea(profile.location), profile.spot),
+}))
 
 /** Everyone you can meet in the district (never includes you). */
 export function getPeople(): Profile[] {
   const { real } = useDirectory.getState()
   samplesVisible = real.length < RETIRE_SAMPLES_AT
-  return samplesVisible ? [...samplePeople(), ...real] : real
+  return samplesVisible ? [...citySamples, ...real] : real
 }
 
 export function usePeople(): Profile[] {

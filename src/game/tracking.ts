@@ -1,2 +1,4 @@
-/** Live route from the player to the person being tracked (world XZ waypoints). */
-export const route = { path: [] as [number, number][] }
+import type { CityPoint } from './city/layout'
+
+/** Live walking directions to a person or landmark. */
+export const route = { path: [] as CityPoint[] }

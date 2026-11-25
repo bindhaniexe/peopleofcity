@@ -286,7 +286,7 @@ export function startAmbience() {
   const campus = active.def.id === 'patia'
   cityBed(campus ? 0.11 : 0.065)
   park()
-  portalHum()
+  if (active.def.id !== 'bhubaneswar') portalHum()
   streetSounds()
   every(campus ? 6 : 11, campus ? 14 : 23, horn, 3)
 }

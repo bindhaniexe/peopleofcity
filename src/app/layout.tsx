@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from 'next'
-import { Barlow, Barlow_Condensed, Noto_Sans_Oriya } from 'next/font/google'
+import { Barlow, Barlow_Condensed } from 'next/font/google'
 import { GoogleAnalytics } from '@next/third-parties/google'
 import { ANALYTICS_ON, CITY_NAME, GA_ID, IS_PRODUCTION, SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from '@/lib/site'
+import '@fontsource-variable/noto-sans-oriya'
 import './globals.css'
 
 const display = Barlow_Condensed({
@@ -15,12 +16,6 @@ const body = Barlow({
   subsets: ['latin'],
   weight: ['500', '600', '700'],
   variable: '--font-body',
-})
-
-const odia = Noto_Sans_Oriya({
-  subsets: ['oriya'],
-  weight: ['600', '700'],
-  variable: '--font-odia',
 })
 
 export const metadata: Metadata = {
@@ -66,7 +61,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-IN" className={`${display.variable} ${body.variable} ${odia.variable}`}>
+    <html lang="en-IN" className={`${display.variable} ${body.variable}`}>
       <body>
         {IS_PRODUCTION && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />}
         {children}
